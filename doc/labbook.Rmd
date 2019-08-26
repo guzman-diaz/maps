@@ -60,8 +60,6 @@ mapMatrix <- read.table(fileName, skip = 6, header = FALSE) %>%
     as.matrix()
 
 # Rotate matrix
-RotateMatrix <- function(x) t(apply(x, 2, rev))
-
 mapMatrix <- t(mapMatrix)
 
 ```
@@ -86,21 +84,81 @@ mapMatrix %>%
 render_snapshot()
 ```
 
-# Coordinate transformation
+
+# Track
 
 ```{r}
-TransformCoordinates <- function(coordHorVer, is.lonLat = TRUE, UTMzone = 30){
-  pacman::p_load(rgdal)
-  
-  proj4string <- paste('+proj=utm +zone=',
-                       UTMzone,
-                       '+north +ellps=WGS84 +datum=WGS84 +units=m +no_defs'
-  )
-  
-  return(project(xy = c(coordHorVer[1], coordHorVer[2]), 
-                 proj = proj4string, 
-                 inverse = ifelse(is.lonLat, FALSE, TRUE)
-  ))
-}
+trackTable <- read.csv(here::here('data', 'La_Airúa.csv')) %>% 
+  dplyr::select(1:5) %>% 
+  dplyr::mutate(time = as.POSIXct(time, format = '%Y-%m-%dT%H:%M:%S'))
 ```
+
+# Overlay
+
+https://wcmbishop.github.io/rayshader-demo/
+
+## Define box bounds
+
+```{r}
+# Bounds
+source(here::here('R', 'TransformCoordinates.R'))
+pacman::p_load(leaflet)
+
+## Define xy corners from IGN asc
+cornerCoord.southWest.xy <- c(inputFileHeader[3, 2], inputFileHeader[4, 2]) 
+cornerCoord.northEast.xy <- cornerCoord.southWest.xy + 
+  c(inputFileHeader[1, 2], inputFileHeader[2, 2]) * inputFileHeader[5, 2]
+
+## Transform to lonLat
+cornerCoord.souttWest.lonLat <- TransformCoordinates(cornerCoord.southWest.xy, is.lonLat = F)
+cornerCoord.northEast.lonLat <- TransformCoordinates(cornerCoord.northEast.xy, is.lonLat = F)
+
+
+## Define bounding box with longitude/latitude coordinates
+bbox <- list(
+  p1 = as.list(cornerCoord.souttWest.lonLat),
+  p2 = as.list(cornerCoord.northEast.lonLat)
+)
+
+## Show in map
+leaflet() %>%
+  addTiles() %>% 
+  addRectangles(
+    lng1 = bbox$p1$lon, lat1 = bbox$p1$lat,
+    lng2 = bbox$p2$lon, lat2 = bbox$p2$lat,
+    fillColor = "transparent"
+  ) %>%
+  fitBounds(
+    lng1 = bbox$p1$lon, lat1 = bbox$p1$lat,
+    lng2 = bbox$p2$lon, lat2 = bbox$p2$lat,
+  )
+```
+
+## Get overlay
+
+```{r}
+# Overlay image
+
+## Define image size
+majorDim <- 600
+
+### calculate aspect ration (width/height) from lat/long bounding box
+aspectRatio <- abs((bbox$p1$lon - bbox$p2$lon) / (bbox$p1$lat - bbox$p2$lat))
+
+### define dimensions
+imageWidth <- ifelse(aspectRatio > 1, majorDim, majorDim*aspectRatio) %>% round()
+imageHeigth <- ifelse(aspectRatio < 1, majorDim, majorDim/aspectRatio) %>% round()
+
+## fetch overlay image
+source(here::here('R', 'GetArcGISMapImage.R'))
+imageFileName <- here::here('figs', 'overlay.png')
+GetArcGISMapImage(bbox, 
+                  map_type = 'World_Topo_Map', file = imageFileName,
+                  width = imageWidth, height = imageHeigth, 
+                  sr_bbox = 4326
+)
+
+overlayImage <- png::readPNG(imageFileName)
+```
+
 
