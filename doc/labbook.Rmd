@@ -46,119 +46,192 @@ pacman::p_load(rgdal)
 pacman::p_load(proj4)
 ```
 
+# Import and bind tiles
 
 ```{r}
-fileName <- here::here('data', 'PNOA_MDT25_ETRS89_HU30_0014_LID.asc') 
+pacman::p_load(raster)
 
-inputFileHeader <- scan(fileName, nlines = 6, what = character()) %>% 
-  matrix(ncol = 2, byrow = TRUE) %>% 
-  as.data.frame() %>% 
-  setNames(c('variable', 'value')) %>% 
-  dplyr::mutate(value = as.numeric(as.character(value)))
+# Import data into raster objects
+rasterObject <- list()
 
-mapMatrix <- read.table(fileName, skip = 6, header = FALSE) %>% 
-    as.matrix()
+rasterObject[[1]] <- raster(here::here('data', 'PNOA_MDT25_ETRS89_HU30_0014_LID.asc'))
+# rasterObject[[2]] <- raster(here::here('data', 'PNOA_MDT25_ETRS89_HU30_0014_LID.asc'))
 
-# Rotate matrix
-mapMatrix <- t(mapMatrix)
+if (length(rasterObject) > 1){
+  rasterObject.merge <- do.call(merge, rasterObject)
+} else {
+  rasterObject.merge <- rasterObject[[1]]
+}
 
+# Convert raster object to matrix
+mapMatrix <- matrix(raster::extract(rasterObject.merge, 
+                                    raster::extent(rasterObject.merge), 
+                                    buffer = 1000
+),
+nrow = ncol(rasterObject.merge), 
+ncol = nrow(rasterObject.merge)
+)
+```
+
+## Define box bounds and show in OpenStreetMap
+
+```{r}
+# Bounds
+# source(here::here('R', 'TransformCoordinates.R'))
+
+## Define xy corners from IGN asc
+cornerCoord.southWest.xy <- c(rasterObject.merge@extent@xmin, rasterObject.merge@extent@ymin) 
+cornerCoord.northEast.xy <- c(rasterObject.merge@extent@xmax, rasterObject.merge@extent@ymax)
+
+## Transform to lonLat
+cornerCoord.southWest.lonLat <- TransformCoordinates(cornerCoord.southWest.xy, is.lonLat = F)
+cornerCoord.northEast.lonLat <- TransformCoordinates(cornerCoord.northEast.xy, is.lonLat = F)
 ```
 
 
 ```{r}
-mapMatrix %>%
-  sphere_shade(sunangle = 45,
-               texture = 'desert'
-  ) %>%
-  add_water(detect_water(mapMatrix, min_area = 50), color = 'imhof3') %>%
-  plot_map()
-```
-
-```{r}
-mapMatrix %>%
-  sphere_shade(texture = 'desert') %>%
-  add_water(detect_water(mapMatrix, min_area = 50), color = 'imhof3') %>%
-  # add_shadow(ray_shade(elmat, zscale = 3, maxsearch = 300), 0.5) %>%
-  # add_shadow(ambmat, 0.5) %>%
-  plot_3d(mapMatrix, zscale = 10, fov = 0, theta = 135, zoom = 0.75, phi = 45, windowsize = c(1000, 800))
-render_snapshot()
+## Define bounding box with longitude/latitude coordinates
+boundingBox <- list(
+  p1 = as.list(cornerCoord.southWest.lonLat),
+  p2 = as.list(cornerCoord.northEast.lonLat)
+)
 ```
 
 
-# Track
-
 ```{r}
-trackTable <- read.csv(here::here('data', 'La_Airúa.csv')) %>% 
-  dplyr::select(1:5) %>% 
-  dplyr::mutate(time = as.POSIXct(time, format = '%Y-%m-%dT%H:%M:%S'))
+## Show in map
+source(here::here('R', 'ShowOSM.R'))
+ShowOSM(boundingBox, graticuleInterval = 0.1)
 ```
 
 # Overlay
 
 https://wcmbishop.github.io/rayshader-demo/
 
-## Define box bounds
-
-```{r}
-# Bounds
-source(here::here('R', 'TransformCoordinates.R'))
-pacman::p_load(leaflet)
-
-## Define xy corners from IGN asc
-cornerCoord.southWest.xy <- c(inputFileHeader[3, 2], inputFileHeader[4, 2]) 
-cornerCoord.northEast.xy <- cornerCoord.southWest.xy + 
-  c(inputFileHeader[1, 2], inputFileHeader[2, 2]) * inputFileHeader[5, 2]
-
-## Transform to lonLat
-cornerCoord.souttWest.lonLat <- TransformCoordinates(cornerCoord.southWest.xy, is.lonLat = F)
-cornerCoord.northEast.lonLat <- TransformCoordinates(cornerCoord.northEast.xy, is.lonLat = F)
-
-
-## Define bounding box with longitude/latitude coordinates
-bbox <- list(
-  p1 = as.list(cornerCoord.souttWest.lonLat),
-  p2 = as.list(cornerCoord.northEast.lonLat)
-)
-
-## Show in map
-leaflet() %>%
-  addTiles() %>% 
-  addRectangles(
-    lng1 = bbox$p1$lon, lat1 = bbox$p1$lat,
-    lng2 = bbox$p2$lon, lat2 = bbox$p2$lat,
-    fillColor = "transparent"
-  ) %>%
-  fitBounds(
-    lng1 = bbox$p1$lon, lat1 = bbox$p1$lat,
-    lng2 = bbox$p2$lon, lat2 = bbox$p2$lat,
-  )
-```
-
 ## Get overlay
 
 ```{r}
-# Overlay image
+# Get overlay image
+source(here::here('R', 'GetMapImage.R'))
 
-## Define image size
-majorDim <- 600
-
-### calculate aspect ration (width/height) from lat/long bounding box
-aspectRatio <- abs((bbox$p1$lon - bbox$p2$lon) / (bbox$p1$lat - bbox$p2$lat))
-
-### define dimensions
-imageWidth <- ifelse(aspectRatio > 1, majorDim, majorDim*aspectRatio) %>% round()
-imageHeigth <- ifelse(aspectRatio < 1, majorDim, majorDim/aspectRatio) %>% round()
-
-## fetch overlay image
-source(here::here('R', 'GetArcGISMapImage.R'))
-imageFileName <- here::here('figs', 'overlay.png')
-GetArcGISMapImage(bbox, 
-                  map_type = 'World_Topo_Map', file = imageFileName,
-                  width = imageWidth, height = imageHeigth, 
-                  sr_bbox = 4326
+overlayImage <- GetMapImage(boundingBox,
+                            majorDim = 600,
+                            map_type = 'World_Street_Map',
+                            imageFileName = here::here('figs', 'overlay.png')
 )
-
-overlayImage <- png::readPNG(imageFileName)
 ```
 
+
+```{r}
+# Apply 2D overlay
+mapMatrix %>%
+  sphere_shade(sunangle = 270,
+               texture = 'imhof4'
+  ) %>%
+  add_water(detect_water(mapMatrix, min_area = 2e3), color = 'imhof3') %>%
+  # add_overlay(overlayImage, alphalayer = 0.9) %>%
+  plot_map()
+```
+
+
+```{r}
+# Apply 3D overlay
+mapMatrix %>%
+  sphere_shade(texture = 'desert', sunangle = 120) %>%
+  add_water(detect_water(mapMatrix, min_area = 1000), color = 'imhof3') %>%
+  # add_overlay(overlayImage, alphalayer = 0.5) %>%
+  add_shadow(ray_shade(mapMatrix, zscale = 1, maxsearch = 300), 0.5) %>%
+  plot_3d(mapMatrix, zscale = 1, fov = 0, theta = 135, zoom = 0.4, phi = 30, windowsize = c(1500, 1200))
+render_snapshot()
+
+```
+
+
+# Crop
+
+
+```{r}
+rasterObject.merge <- raster(here::here('data', 'PNOA_MDT05_ETRS89_HU30_0014_LID.asc'))
+
+mapMatrix <- matrix(raster::extract(rasterObject.merge, 
+                                    raster::extent(rasterObject.merge), 
+                                    buffer = 1000
+),
+nrow = ncol(rasterObject.merge), 
+ncol = nrow(rasterObject.merge)
+)
+
+# Crop
+
+## Define limits
+cornerCoord.southWest.lonLat <- data.frame(lon = -5.67, lat = 43.51) 
+cornerCoord.northEast.lonLat <- data.frame(lon = -5.63, lat = 43.56) 
+
+## Transform to xy
+cornerCoord.souttWest.xy <- TransformCoordinates(cornerCoord.southWest.lonLat, is.lonLat = T)
+cornerCoord.northEast.xy <- TransformCoordinates(cornerCoord.northEast.lonLat, is.lonLat = T)
+
+## Define polygon
+cropPolygon <- as(raster::extent(list(x = c(cornerCoord.souttWest.xy[1], cornerCoord.northEast.xy[1]),
+                                      y = c(cornerCoord.souttWest.xy[2], cornerCoord.northEast.xy[2])
+)), 
+'SpatialPolygons'
+)
+
+## Crop
+rasterObject.cropped <- raster::crop(rasterObject.merge, cropPolygon)
+
+# Convert to matrix
+mapMatrix <- matrix(raster::extract(rasterObject.cropped, 
+                                    raster::extent(rasterObject.cropped), 
+                                    buffer = 1000
+),
+nrow = ncol(rasterObject.cropped), 
+ncol = nrow(rasterObject.cropped)
+)
+
+```
+
+
+```{r}
+## Define bounding box with longitude/latitude coordinates
+boundingBox <- list(
+  p1 = as.list(cornerCoord.southWest.lonLat),
+  p2 = as.list(cornerCoord.northEast.lonLat)
+)
+
+# Get overlay image
+source(here::here('R', 'GetMapImage.R'))
+
+overlayImage <- GetMapImage(boundingBox,
+                            majorDim = 2000,
+                            map_type = 'World_Topo_Maps',
+                            imageFileName = here::here('figs', 'overlay.png')
+)
+
+
+```
+
+```{r}
+# Apply 3D overlay
+mapMatrix %>%
+  sphere_shade(texture = 'imhof4', sunangle = 120) %>%
+  add_water(detect_water(mapMatrix, min_area = 1000), color = 'imhof3') %>%
+  add_overlay(overlayImage, alphalayer = 0.9) %>%
+  add_shadow(ray_shade(mapMatrix, zscale = 1, maxsearch = 300), 0.5) %>%
+  plot_3d(mapMatrix, zscale = 1, fov = 0, theta = 135, zoom = 0.4, phi = 30, windowsize = c(1500, 1200))
+render_snapshot()
+
+```
+
+
+# Load tiles
+
+```{r}
+# Load track
+trackTable <- read.csv(here::here('data', 'La_Airúa.csv')) %>% 
+  dplyr::select(1:5) %>% 
+  dplyr::mutate(as.POSIXct(time, format = '%Y-%m-%dT%H:%M:%S')) %>% 
+  as.data.frame()
+```
 
