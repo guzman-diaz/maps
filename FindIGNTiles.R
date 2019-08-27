@@ -5,7 +5,7 @@ FindIGNTiles <- function(pointTable, is.lonLat = TRUE){
     dplyr::filter(UTMzone == 30)
   
   # Iterate over all points
-  tileId <- vector()
+  tileSet <- vector()
   for (pointId in 1:nrow(pointTable)){
     
     ## Retrieve point coord
@@ -17,7 +17,7 @@ FindIGNTiles <- function(pointTable, is.lonLat = TRUE){
     }
     
     ## Find tile
-    tileId <- cornerTable %>% 
+    tileSet <- cornerTable %>% 
       ### Filter tiles containing the point
       dplyr::filter(xmin <= pointCoord$x & pointCoord$x <= xmax &
                       ymin <= pointCoord$y & pointCoord$y <= ymax
@@ -25,9 +25,9 @@ FindIGNTiles <- function(pointTable, is.lonLat = TRUE){
       ### Select the tile ids
       dplyr::select(name) %>% 
       ### Combine the result with that of previous points
-      union(tileId) %>% 
+      union(tileSet) %>% 
       unlist()
   }
   
-  return(tileId)
+  return(tileSet)
 }
