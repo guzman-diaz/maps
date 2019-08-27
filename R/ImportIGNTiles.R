@@ -48,6 +48,7 @@ ImportIGNTiles <- function(tileSet,
   
   # Output
   return(list(elevation = mapMatrix,
-              extent = extent(rasterObject.merge)
+              extent = extent(rasterObject.merge),
+              boundingBox = boundingBox
   ))
 } 
