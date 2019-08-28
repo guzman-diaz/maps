@@ -1,5 +1,6 @@
 ImportIGNTiles <- function(tileSet,
-                           tileResolution = 25
+                           tileResolution = 25,
+                           folderName = NULL
 ){
   
   pacman::p_load(raster)
@@ -7,9 +8,16 @@ ImportIGNTiles <- function(tileSet,
   # Initialize
   rasterObject <- list()
   
+  # Define file name
+  if (is.null(folderName)){
+    folderName <- '\\\\pocpaco\\maps\\'
+  } else {
+    folderName <- paste(folderName, '/', sep = '')
+  }
+
   # Import individual tiles in a list
-  for (tileId in seq(tileSet)){
-    rasterObject[[tileId]] <- raster(paste('\\\\pocpaco\\maps\\', 
+  for (tileId in 1:length(tileSet)){
+    rasterObject[[tileId]] <- raster(paste(folderName, 
                                            'PNOA_MDT',
                                            tileResolution,
                                            '_ETRS89_HU30_',
@@ -26,29 +34,7 @@ ImportIGNTiles <- function(tileSet,
     rasterObject.merge <- rasterObject[[1]]
   }
   
-  # Convert raster object to matrix
-  mapMatrix <- matrix(raster::extract(rasterObject.merge, 
-                                      extent(rasterObject.merge), 
-                                      buffer = 1000
-  ),
-  nrow = ncol(rasterObject.merge), 
-  ncol = nrow(rasterObject.merge)
-  )
-  
-  # Bounding box
-  ## xy
-  boundingBox <- list(
-    p1 = as.list(c(x = extent(rasterObject.merge)@xmin, y = extent(rasterObject.merge)@ymin)),
-    p2 = as.list(c(x = extent(rasterObject.merge)@xmax, y = extent(rasterObject.merge)@ymax))
-  )
-  
-  ## lonlat
-  boundingBox$p1 <-  c(boundingBox$p1, TransformCoordinates(as.vector(boundingBox$p1), is.lonLat = F))
-  boundingBox$p2 <-  c(boundingBox$p2, TransformCoordinates(as.vector(boundingBox$p2), is.lonLat = F))
-  
   # Output
-  return(list(elevation = mapMatrix,
-              extent = extent(rasterObject.merge),
-              boundingBox = boundingBox
-  ))
+  return(rasterObject.merge)
+  
 } 
