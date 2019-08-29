@@ -19,7 +19,7 @@ ImportIGNTiles <- function(tileSet,
   for (tileId in 1:length(tileSet)){
     rasterObject[[tileId]] <- raster(paste(folderName, 
                                            'PNOA_MDT',
-                                           tileResolution,
+                                           sprintf('%02d', tileResolution),
                                            '_ETRS89_HU30_',
                                            sprintf('%04d', tileSet[tileId]),
                                            '_LID.asc', 
@@ -33,6 +33,9 @@ ImportIGNTiles <- function(tileSet,
   } else {
     rasterObject.merge <- rasterObject[[1]]
   }
+  
+  # Add CRS
+  crs(rasterObject.merge) <- '+proj=utm +zone=30 +north +ellps=WGS84 +datum=WGS84 +units=m +no_defs'
   
   # Output
   return(rasterObject.merge)
