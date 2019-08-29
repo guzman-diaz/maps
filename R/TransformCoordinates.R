@@ -4,7 +4,8 @@ TransformCoordinates <- function(coordHorVer, is.lonLat = TRUE, UTMzone = 30){
   
   proj4string <- paste('+proj=utm +zone=',
                        UTMzone,
-                       '+north +ellps=WGS84 +datum=WGS84 +units=m +no_defs'
+                       ' +north +ellps=WGS84 +datum=WGS84 +units=m +no_defs',
+                       sep =''
   )
   
   if (is.lonLat){
