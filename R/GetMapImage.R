@@ -67,7 +67,6 @@ GetMapImage <- function(boundingBox,
   imageHeigth <- ifelse(aspectRatio < 1, majorDim, majorDim/aspectRatio) %>% round()
   
   ## fetch overlay image
-  source(here::here('R', 'GetArcGISMapImage.R'))
   imageFileName <- here::here('figs', 'overlay.png')
   GetArcGISMapImage(boundingBox, 
                     map_type = 'World_Imagery', file = imageFileName,
