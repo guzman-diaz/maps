@@ -1,9 +1,16 @@
-DefineBoundingBox <- function(boundingBox = NULL, 
+DefineBoundingBox <- function(pointTable = NULL,
+                              boundingBox = NULL, 
                               p1 = NULL, 
                               p2 = NULL, 
                               is.lonLat = T,
                               zoomLevel = 1
 ){
+  
+  # Create bounding box from point table
+  if (!is.null(pointTable)){
+    p1 <- c(min(pointTable[, 1]), min(pointTable[, 2]))
+    p2 <- c(max(pointTable[, 1]), max(pointTable[, 2]))
+  }
   
   # Gather in a list
   if (is.null(boundingBox)){
