@@ -1,4 +1,4 @@
-CropRaster <- function(rasterObject, boundingBox, zoomLevel = 1){
+CropRaster <- function(rasterObject, boundingBox){
   
   # Define polygon
   cropPolygon <- with(boundingBox,
