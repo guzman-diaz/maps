@@ -45,37 +45,16 @@ pacman::p_load(rayshader)
 pacman::p_load(rgdal)
 pacman::p_load(proj4)
 pacman::p_load(raster)
+pacman::p_load(geoviz)
 
 sapply(list.files(here::here('R')), function(x) source(here::here('R', x)))
 ```
 
 
-## Define box bounds and show in OpenStreetMap
 
 ```{r}
-# Bounds
-source(here::here('R', 'TransformCoordinates.R'))
+boundingBox <- DefineBoundingBox(p1 = c(lon = -5.85, lat = 43.5), p2 = c(lon = -5.95, lat = 42.5))
 
-## Define xy corners from IGN asc
-cornerCoord.southWest.xy <- c(rasterObject.merge@extent@xmin, rasterObject.merge@extent@ymin) 
-cornerCoord.northEast.xy <- c(rasterObject.merge@extent@xmax, rasterObject.merge@extent@ymax)
-
-## Transform to lonLat
-cornerCoord.southWest.lonLat <- TransformCoordinates(cornerCoord.southWest.xy, is.lonLat = F)
-cornerCoord.northEast.lonLat <- TransformCoordinates(cornerCoord.northEast.xy, is.lonLat = F)
-```
-
-
-```{r}
-## Define bounding box with longitude/latitude coordinates
-boundingBox <- list(
-  p1 = as.list(cornerCoord.southWest.lonLat),
-  p2 = as.list(cornerCoord.northEast.lonLat)
-)
-```
-
-
-```{r}
 ## Show in map
 ShowOSM(boundingBox, graticuleInterval = 0.1)
 ```
@@ -84,118 +63,6 @@ ShowOSM(boundingBox, graticuleInterval = 0.1)
 
 https://wcmbishop.github.io/rayshader-demo/
 
-## Get overlay
-
-```{r}
-# Get overlay image
-overlayImage <- GetMapImage(boundingBox,
-                            majorDim = 600,
-                            map_type = 'World_Street_Map',
-                            imageFileName = here::here('figs', 'overlay.png')
-)
-```
-
-
-```{r}
-# Apply 2D overlay
-mapMatrix %>%
-  sphere_shade(sunangle = 270,
-               texture = 'imhof4'
-  ) %>%
-  add_water(detect_water(mapMatrix, min_area = 2e3), color = 'imhof3') %>%
-  # add_overlay(overlayImage, alphalayer = 0.9) %>%
-  plot_map()
-```
-
-
-```{r}
-# Apply 3D overlay
-mapMatrix %>%
-  sphere_shade(texture = 'desert', sunangle = 120) %>%
-  add_water(detect_water(mapMatrix, min_area = 1000), color = 'imhof3') %>%
-  # add_overlay(overlayImage, alphalayer = 0.5) %>%
-  add_shadow(ray_shade(mapMatrix, zscale = 1, maxsearch = 300), 0.5) %>%
-  plot_3d(mapMatrix, zscale = 1, fov = 0, theta = 135, zoom = 0.4, phi = 30, windowsize = c(1500, 1200))
-render_snapshot()
-
-```
-
-
-# Crop
-
-
-```{r}
-rasterObject.merge <- raster(here::here('data', 'PNOA_MDT05_ETRS89_HU30_0014_LID.asc'))
-
-mapMatrix <- matrix(raster::extract(rasterObject.merge, 
-                                    raster::extent(rasterObject.merge), 
-                                    buffer = 1000
-),
-nrow = ncol(rasterObject.merge), 
-ncol = nrow(rasterObject.merge)
-)
-
-# Crop
-
-## Define limits
-cornerCoord.southWest.lonLat <- data.frame(lon = -5.67, lat = 43.51) 
-cornerCoord.northEast.lonLat <- data.frame(lon = -5.63, lat = 43.56) 
-
-## Transform to xy
-cornerCoord.souttWest.xy <- TransformCoordinates(cornerCoord.southWest.lonLat, is.lonLat = T)
-cornerCoord.northEast.xy <- TransformCoordinates(cornerCoord.northEast.lonLat, is.lonLat = T)
-
-## Define polygon
-cropPolygon <- as(raster::extent(list(x = c(cornerCoord.souttWest.xy[1], cornerCoord.northEast.xy[1]),
-                                      y = c(cornerCoord.souttWest.xy[2], cornerCoord.northEast.xy[2])
-)), 
-'SpatialPolygons'
-)
-
-## Crop
-rasterObject.cropped <- raster::crop(rasterObject.merge, cropPolygon)
-
-# Convert to matrix
-mapMatrix <- matrix(raster::extract(rasterObject.cropped, 
-                                    raster::extent(rasterObject.cropped), 
-                                    buffer = 1000
-),
-nrow = ncol(rasterObject.cropped), 
-ncol = nrow(rasterObject.cropped)
-)
-
-```
-
-
-```{r}
-## Define bounding box with longitude/latitude coordinates
-boundingBox <- list(
-  p1 = as.list(cornerCoord.southWest.lonLat),
-  p2 = as.list(cornerCoord.northEast.lonLat)
-)
-
-# Get overlay image
-overlayImage <- GetMapImage(boundingBox,
-                            majorDim = 2000,
-                            map_type = 'World_Topo_Maps',
-                            imageFileName = here::here('figs', 'overlay.png')
-)
-
-
-```
-
-```{r}
-# Apply 3D overlay
-mapMatrix %>%
-  sphere_shade(texture = 'imhof4', sunangle = 120) %>%
-  add_water(detect_water(mapMatrix, min_area = 1000), color = 'imhof3') %>%
-  add_overlay(overlayImage, alphalayer = 0.9) %>%
-  add_shadow(ray_shade(mapMatrix, zscale = 1, maxsearch = 300), 0.5) %>%
-  plot_3d(mapMatrix, zscale = 1, fov = 0, theta = 135, zoom = 0.4, phi = 30, windowsize = c(1500, 1200))
-render_snapshot()
-
-```
-
 
 # Plot track
 
@@ -203,27 +70,39 @@ render_snapshot()
 
 ```{r}
 # Load track
-trackTable <- read.csv(here::here('data', 'La_Airúa.csv')) %>% 
+trackTable <- read.csv(here::here('data', 'Tiatordos.csv')) %>% 
   dplyr::select(1:5) %>% 
   dplyr::mutate(time = as.POSIXct(time, format = '%Y-%m-%dT%H:%M:%S')) %>% 
   dplyr::select(lon, lat)
 
+# Define box
+boundingBox <- DefineBoundingBox(pointTable = trackTable, zoomLevel = 1.35)
+
 # Obtain tile ids
-tileSet <- FindIGNTiles(trackTable, is.lonLat = T)
+tileSet <- FindIGNTiles(boundingBox = boundingBox)
 # tileSet <- FindIGNTiles(pointTable = data.frame(lon = -5.85, lat = 43.5), is.lonLat = T)
 
 # Import data into raster objects
-rasterObject <- ImportIGNTiles(tileSet, tileResolution = 25, 
+rasterObject <- ImportIGNTiles(tileSet, tileResolution = 5, 
                                folderName = here::here('data')
 )
+
+# Get track elevation
+trackTable$elevation <- extract(rasterObject, TransformCoordinates(trackTable, is.lonLat = T))
+
+# Crop
+rasterObject <- CropRaster(rasterObject, boundingBox)
 
 # Extract elevation and extent
 mapData <- ExtractFromRaster(rasterObject)
 
-# Bounding box
-boundingBox <- mapData$boundingBox
+# Get overlay image
+overlayImage <- GetMapImage(boundingBox,
+                            majorDim = 4000,
+                            map_type = 'World_Imagery',
+                            imageFileName = here::here('figs', 'overlay.png')
+)
 
-# 
 ```
 
 ```{r}
@@ -237,26 +116,34 @@ mapData$elevation %>%
   plot_map()
 ```
 
-```{r}
-# Convert lat and long to rayshader grid
-		xmin <- elev_img@extent@xmin
-		ymin <- elev_img@extent@ymin
 
-		xmin_vec <- rep(xmin,length(gpx$lon))
-		ymin_vec <- rep(ymin,length(gpx$lat))
-		x <- (gpx$lon-xmin_vec)/ res(elev_img)[1]
-		y <- (gpx$lat-ymin_vec)/ res(elev_img)[2]
-		z <- extract(elev_img, gpx[,c(4,5)])
-				  
-				  
-		# Plot the route in 3D
-		rgl::lines3d(
-			  x,
-			  z/(zscale-.08),
-			  -y,
-			  color = "yellow",
-			  add= TRUE
-		)
-	
+```{r}
+# Apply 3D overlay
+mapData$elevation %>%
+  sphere_shade(texture = 'imhof4', sunangle = 120) %>%
+  add_water(detect_water(mapData$elevation, min_area = 25), color = 'imhof3') %>%
+  add_overlay(overlayImage, alphalayer = 0.9) %>%
+  add_shadow(ray_shade(mapData$elevation, zscale = 1, maxsearch = 300), 0.5) %>%
+  plot_3d(mapData$elevation, 
+          zscale = raster_zscale(rasterObject), 
+          fov = 0, 
+          theta = 135, 
+          zoom = 0.6, 
+          phi = 30, 
+          windowsize = c(1000, 1000),
+          solid = FALSE,
+          shadow = TRUE,
+          shadowdepth = -1
+  )
+render_snapshot()
+
+
+add_gps_to_rayshader(rasterObject, 
+                     lat = trackTable$lat, 
+                     lon = trackTable$lon, 
+                     alt = trackTable$elevation, 
+                     zscale = raster_zscale(rasterObject), 
+)
 ```
+
 
