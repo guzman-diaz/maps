@@ -33,10 +33,16 @@ knitr::opts_chunk$set(
   )  
 ```
 
-# First tests
+# Preliminaries
+
+IGN:
 
 http://centrodedescargas.cnig.es/CentroDescargas/catalogo.do?Serie=LIDAR
 http://www.ign.es/wcts-app/
+
+Tutorials:
+
+https://wcmbishop.github.io/rayshader-demo/
 
 
 ```{r}
@@ -50,60 +56,112 @@ pacman::p_load(geoviz)
 sapply(list.files(here::here('R')), function(x) source(here::here('R', x)))
 ```
 
-
+# Plot OMS wrt a bounding box
 
 ```{r}
-boundingBox <- DefineBoundingBox(p1 = c(lon = -5.85, lat = 43.5), p2 = c(lon = -5.95, lat = 42.5))
+boundingBox <- DefineBoundingBox(p1 = c(lon = -7.4, lat = 43.5), p2 = c(lon = -6.0, lat = 42.5))
 
 ## Show in map
 ShowOSM(boundingBox, graticuleInterval = 0.1)
 ```
 
-# Overlay
-
-https://wcmbishop.github.io/rayshader-demo/
-
 
 # Plot track
 
-## Prepare matrix 
+## Load track
 
-```{r}
-# Load track
-trackTable <- read.csv(here::here('data', 'Tiatordos.csv')) %>% 
+```{r, results='asis'}
+trackTable <- read.csv(here::here('data', 'Oso.csv')) %>% 
   dplyr::select(1:5) %>% 
   dplyr::mutate(time = as.POSIXct(time, format = '%Y-%m-%dT%H:%M:%S')) %>% 
   dplyr::select(lon, lat)
 
-# Define box
-boundingBox <- DefineBoundingBox(pointTable = trackTable, zoomLevel = 1.35)
+trackTable %>%head(5) %>% knitr::kable()
+```
 
-# Obtain tile ids
-tileSet <- FindIGNTiles(boundingBox = boundingBox)
-# tileSet <- FindIGNTiles(pointTable = data.frame(lon = -5.85, lat = 43.5), is.lonLat = T)
+## Define box from track
 
-# Import data into raster objects
-rasterObject <- ImportIGNTiles(tileSet, tileResolution = 5, 
-                               folderName = here::here('data')
+The track is intoduced by means of the variable `pointTable`. Then `DefineBoundingBox` searches for the bounding box capable of containing the track inside. If instead `boundingBox` is not null (and `pointTable` is), it can be modified using the `zoomLevel`. Another option is to introduce the points `p1` (lower left corner) and `p2` (top right corner). The points must be in format `p1 = c(lon = -5.0, lat = 41.2)` or `p1 = (x = 42000, y = 12000)`. The logical variable `is.lonLat` indicates whether the table and points introduced are in lonlat or in metric xy format. Finally, `zoomLevel > 1` enlarges the bounding box.
+
+```{r, results='asis'}
+boundingBox <- DefineBoundingBox(pointTable = trackTable, 
+                                 boundingBox = NULL, 
+                                 p1 = NULL, 
+                                 p2 = NULL, 
+                                 is.lonLat = T,
+                                 zoomLevel = 1.35
 )
 
-# Get track elevation
+str(boundingBox)
+```
+
+## Get tiles from IGN
+
+Regarding `ImportIGNTiles`:
+
+- `tileResolution`: 5 (higher) or 25 (lower) resolution files.
+
+- `folderName`: by default, the folder is `\\pocpaco\maps\`.
+
+```{r, results='asis'}
+# Obtain tile codes
+tileSet <- FindIGNTiles(boundingBox = boundingBox)
+
+print(tileSet)
+
+# Import data into raster objects
+rasterObject <- ImportIGNTiles(tileSet, 
+                               tileResolution = 5,
+                               folderName = here::here('data')
+)
+```
+
+## Get track elevation
+
+```{r, results='asis'}
 trackTable$elevation <- extract(rasterObject, TransformCoordinates(trackTable, is.lonLat = T))
 
+trackTable %>%head(5) %>% knitr::kable()
+```
+
+## Crop the IGN tile
+
+Retain only the tile inside the bounding box.
+
+```{r}
 # Crop
 rasterObject <- CropRaster(rasterObject, boundingBox)
+```
 
-# Extract elevation and extent
+## Extract data from raster
+
+This extracts the elevation matrix, the extent, and the bounding box.
+
+```{r}
 mapData <- ExtractFromRaster(rasterObject)
 
-# Get overlay image
+str(mapData)
+```
+
+## Get overlay image
+
+Options are:
+
+- `mapType`: `'World_Topo_Map'`, `'World_Street_Map'`, and `'World_Imagery'`.
+
+- `majorDim`: the image reolution. The larger, the more resolution. 600 for low resolution.
+
+
+```{r}
 overlayImage <- GetMapImage(boundingBox,
                             majorDim = 4000,
-                            map_type = 'World_Imagery',
+                            mapType = 'World_Imagery',
                             imageFileName = here::here('figs', 'overlay.png')
 )
 
 ```
+
+## Plot 2-D map
 
 ```{r}
 # Apply 2D overlay
@@ -112,10 +170,11 @@ mapData$elevation %>%
                texture = 'imhof4'
   ) %>%
   add_water(detect_water(mapData$elevation, min_area = 500), color = 'imhof3') %>%
-  # add_overlay(overlayImage, alphalayer = 0.9) %>%
+  add_overlay(overlayImage, alphalayer = 0.9) %>%
   plot_map()
 ```
 
+## Plot 3-D map
 
 ```{r}
 # Apply 3D overlay
