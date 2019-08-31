@@ -17,14 +17,20 @@ ImportIGNTiles <- function(tileSet,
 
   # Import individual tiles in a list
   for (tileId in 1:length(tileSet)){
-    rasterObject[[tileId]] <- raster(paste(folderName, 
-                                           'PNOA_MDT',
-                                           sprintf('%02d', tileResolution),
-                                           '_ETRS89_HU30_',
-                                           sprintf('%04d', tileSet[tileId]),
-                                           '_LID.asc', 
-                                           sep = ''
-    ))
+    fileName <- paste(folderName, 
+                      'PNOA_MDT',
+                      sprintf('%02d', tileResolution),
+                      '_ETRS89_HU30_',
+                      sprintf('%04d', tileSet[tileId]),
+                      '_LID.asc', 
+                      sep = ''
+    )
+    
+    if (file.exists(fileName)){
+      rasterObject[[tileId]] <- raster(fileName)
+    } else {
+      stop(sprintf('Tile number %04d not found. Go to http://centrodedescargas.cnig.es/CentroDescargas/catalogo.do?Serie=LIDAR', tileSet[tileId]))
+    }
   }
   
   # If several tiles, merge
