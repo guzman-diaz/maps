@@ -1,10 +1,10 @@
 GetMapImage <- function(boundingBox,
                         majorDim = 600,
-                        map_type = c('World_Topo_Maps', 'World_Street_Map', 'World_Imagery')[1],
+                        mapType = c('World_Topo_Maps', 'World_Street_Map', 'World_Imagery')[1],
                         imageFileName = here::here('figs', 'overlay.png')
 ){
   
-  GetArcGISMapImage <- function(boundingBox, map_type = "World_Street_Map", file = NULL, 
+  GetArcGISMapImage <- function(boundingBox, mapType = "World_Street_Map", file = NULL, 
                                 width = 400, height = 400, sr_bbox = 4326) {
     require(httr)
     require(glue) 
@@ -16,8 +16,8 @@ GetMapImage <- function(boundingBox,
     web_map_param <- list(
       baseMap = list(
         baseMapLayers = list(
-          list(url = jsonlite::unbox(glue("https://services.arcgisonline.com/ArcGIS/rest/services/{map_type}/MapServer",
-                                          map_type = map_type)))
+          list(url = jsonlite::unbox(glue("https://services.arcgisonline.com/ArcGIS/rest/services/{mapType}/MapServer",
+                                          mapType = mapType)))
         )
       ),
       exportOptions = list(
@@ -69,7 +69,8 @@ GetMapImage <- function(boundingBox,
   ## fetch overlay image
   imageFileName <- here::here('figs', 'overlay.png')
   GetArcGISMapImage(boundingBox, 
-                    map_type = 'World_Imagery', file = imageFileName,
+                    mapType = mapType, 
+                    file = imageFileName,
                     width = imageWidth, height = imageHeigth, 
                     sr_bbox = 4326
   )
