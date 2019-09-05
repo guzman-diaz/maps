@@ -3,8 +3,16 @@ DefineBoundingBox <- function(pointTable = NULL,
                               p1 = NULL, 
                               p2 = NULL, 
                               is.lonLat = T,
+                              rasterObject = NULL,
                               zoomLevel = 1
 ){
+  
+  # From raster
+  if (!is.null(rasterObject)){
+    p1 <- c(x = rasterObject@extent@xmin, y = rasterObject@extent@ymin)
+    p2 <- c(x = rasterObject@extent@xmax, y = rasterObject@extent@ymax)
+    is.lonLat <- F
+  }
   
   # Create bounding box from lonlat point table
   if (!is.null(pointTable)){
@@ -21,6 +29,12 @@ DefineBoundingBox <- function(pointTable = NULL,
   if (is.lonLat){
     boundingBox$p1 <-  c(boundingBox$p1, TransformCoordinates(as.vector(boundingBox$p1), is.lonLat = T))
     boundingBox$p2 <-  c(boundingBox$p2, TransformCoordinates(as.vector(boundingBox$p2), is.lonLat = T))
+  }
+  
+  # Check if lonlat coordinates are present. If not, retrieve
+  if (!is.lonLat){
+    boundingBox$p1 <-  c(boundingBox$p1, TransformCoordinates(as.vector(boundingBox$p1), is.lonLat = F))
+    boundingBox$p2 <-  c(boundingBox$p2, TransformCoordinates(as.vector(boundingBox$p2), is.lonLat = F))
   }
   
   # Apply zoom
