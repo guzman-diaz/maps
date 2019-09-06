@@ -67,7 +67,7 @@ GetMapImage <- function(boundingBox,
   #-------------------------------------------------------------
   
   # Map types
-  if (mapType %in% c('osm', 'bing', 'stamen-toner', 
+  if (mapType %in% c('osm', 'bing', 'stamen-toner', 'landscape',
                      'maptoolkit-topo',
                      'waze', 'mapquest', 'mapquest-aerial',
                      'stamen-terrain',
@@ -77,11 +77,21 @@ GetMapImage <- function(boundingBox,
                      'opencyclemap', 'osm-transport',
                      'osm-public-transport', 'osm-bbike', 'osm-bbike-german'
   )){
+
+    # https://manage.thunderforest.com/dashboard (piononus@gmail.com)
     
+    if (mapType == 'opencyclemap'){
+      mapType <- 'https://tile.thunderforest.com/cycle/{z}/{x}/{y}.png?apikey=a5e1db75d71d42d8a0c9acf915b1d63b'
+    }
+    
+    if (mapType == 'landscape'){
+      mapType <- 'https://tile.thunderforest.com/landscape/{z}/{x}/{y}.png?apikey=a5e1db75d71d42d8a0c9acf915b1d63b'
+    }
+
     ## Download OSM
     mapObject <- openmap(upperLeft = c(lat = boundingBox$p2$lat, lon = boundingBox$p1$lon),
-                         lowerRight = c(lat = boundingBox$p1$lat, lon = boundingBox$p2$lon), 
-                         zoom = NULL, 
+                         lowerRight = c(lat = boundingBox$p1$lat, lon = boundingBox$p2$lon),
+                         zoom = NULL,
                          type = mapType,
                          mergeTiles = TRUE
     )
