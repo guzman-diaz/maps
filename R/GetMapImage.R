@@ -1,7 +1,8 @@
 GetMapImage <- function(boundingBox,
                         mapType = 'esri-topo',
                         mapDim = NULL,
-                        imageFileName = here::here('figs', 'overlay.png')
+                        imageFileName = here::here('figs', 'overlay.png'),
+                        heightMagnification = 1.07
 ){
   
   pacman::p_load(OpenStreetMap)
@@ -31,7 +32,7 @@ GetMapImage <- function(boundingBox,
   )
   
   # Define image width
-  imageHeight <- mapDim[2]
+  imageHeight <- mapDim[2]*heightMagnification
   imageWidth <- mapDim[1]
   
   # fetch overlay image
