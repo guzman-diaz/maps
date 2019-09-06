@@ -1,6 +1,6 @@
 GetMapImage <- function(boundingBox,
                         mapType = 'esri-topo',
-                        majorDim = 4000,
+                        mapDim = NULL,
                         imageFileName = here::here('figs', 'overlay.png')
 ){
   
@@ -31,9 +31,8 @@ GetMapImage <- function(boundingBox,
   )
   
   # Define image width
-  aspectRatio <- abs((boundingBox$p1$x - boundingBox$p2$x) / (boundingBox$p1$y - boundingBox$p2$y))
-  imageWidth <- ifelse(aspectRatio > 1, majorDim, majorDim*aspectRatio) %>% round()
-  imageHeight <- ifelse(aspectRatio < 1, majorDim, majorDim/aspectRatio) %>% round()
+  imageHeight <- mapDim[2]
+  imageWidth <- mapDim[1]
   
   # fetch overlay image
   png(filename = imageFileName, width = imageWidth, height = imageHeight)
