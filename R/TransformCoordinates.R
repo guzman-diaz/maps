@@ -9,14 +9,14 @@ TransformCoordinates <- function(coordHorVer, is.lonLat = TRUE, UTMzone = 30){
   )
   
   if (is.lonLat){
-    transformedCoord <- project(xy = c(coordHorVer[1], coordHorVer[2]), 
+    transformedCoord <- project(xy = c(coordHorVer['lon'], coordHorVer['lat']), 
                                 proj = proj4string, 
                                 inverse = FALSE
     ) %>% 
       as.data.frame() %>% 
       setNames(c('x', 'y'))
   } else {
-    transformedCoord <- project(xy = c(coordHorVer[1], coordHorVer[2]), 
+    transformedCoord <- project(xy = c(coordHorVer['x'], coordHorVer['y']), 
                                 proj = proj4string, 
                                 inverse = TRUE
     ) %>% 
