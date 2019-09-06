@@ -87,7 +87,7 @@ GetMapImage <- function(boundingBox,
     )
     
     ## Fetch overlay image
-    png(filename = imageFileName, width = imageWidth, height = imageHeight)
+    png(filename = imageFileName, width = imageWidth, height = imageHeight * heightMagnification)
     plot(mapObject)
     dev.off()
     
