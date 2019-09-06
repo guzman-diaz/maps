@@ -1,4 +1,5 @@
 ShowOSM <- function(boundingBox,
+                    trackPoints = NULL,
                     graticuleInterval = 0.1
 ){
   
@@ -20,6 +21,7 @@ ShowOSM <- function(boundingBox,
     ) %>% 
     addLayersControl(overlayGroups = c('Graticule'),
                      options = layersControlOptions(collapsed = FALSE)
-    )
+    ) %>% 
+    { if (!is.null(trackPoints)) addPolylines(map = ., lng = trackPoints$lon, lat = trackPoints$lat) else . }
   
 }
