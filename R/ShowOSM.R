@@ -18,7 +18,7 @@ ShowOSM <- function(boundingBox,
     addRectangles(
       lng1 = boundingBox$p1$lon, lat1 = boundingBox$p1$lat,
       lng2 = boundingBox$p2$lon, lat2 = boundingBox$p2$lat,
-      fillColor = 'transparent'
+      fillColor = 'transparent', weight = '2',
     ) %>%
     fitBounds(
       lng1 = boundingBox$p1$lon, lat1 = boundingBox$p1$lat,
@@ -27,14 +27,14 @@ ShowOSM <- function(boundingBox,
     addSimpleGraticule(interval = graticuleInterval,
                        group = 'Graticule'
     ) %>% 
-    # addLayersControl(overlayGroups = c('Graticule'),
-    #                  options = layersControlOptions(collapsed = FALSE)
-    # ) %>% 
     addLayersControl(position = 'bottomright',
                      baseGroups = c('Topographical', 'Road map', 'Satellite'),
                      overlayGroups = c('Graticule'),
                      options = layersControlOptions(collapsed = FALSE)
     ) %>%
-    { if (!is.null(trackPoints)) addPolylines(map = ., lng = trackPoints$lon, lat = trackPoints$lat) else . }
+    { if (!is.null(trackPoints)) 
+      addPolylines(map = ., lng = trackPoints$lon, lat = trackPoints$lat, weight = 2, opacity = 0.8) 
+      else . 
+    }
   
 }
