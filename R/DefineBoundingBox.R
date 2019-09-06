@@ -31,12 +31,7 @@ DefineBoundingBox <- function(pointTable = NULL,
     boundingBox$p2 <-  c(boundingBox$p2, TransformCoordinates(as.vector(boundingBox$p2), is.lonLat = T))
   }
   
-  # Check if lonlat coordinates are present. If not, retrieve
-  if (!is.lonLat){
-    boundingBox$p1 <-  c(boundingBox$p1, TransformCoordinates(as.vector(boundingBox$p1), is.lonLat = F))
-    boundingBox$p2 <-  c(boundingBox$p2, TransformCoordinates(as.vector(boundingBox$p2), is.lonLat = F))
-  }
-  
+
   # Apply zoom
   ## Diagonal size (in meters)
   boundingBoxDiagonal <- with(boundingBox,
@@ -48,6 +43,10 @@ DefineBoundingBox <- function(pointTable = NULL,
   boundingBox$p1$y <- boundingBox$p1$y + (1-zoomLevel)*boundingBoxDiagonal
   boundingBox$p2$x <- boundingBox$p2$x - (1-zoomLevel)*boundingBoxDiagonal
   boundingBox$p2$y <- boundingBox$p2$y - (1-zoomLevel)*boundingBoxDiagonal
+  
+  # Redefine latlon from zoomed xy coordinates
+  boundingBox$p1[c('lon', 'lat')] <- TransformCoordinates(as.vector(boundingBox$p1), is.lonLat = F)
+  boundingBox$p2[c('lon', 'lat')] <- TransformCoordinates(as.vector(boundingBox$p2), is.lonLat = F)
   
   # Output
   return(boundingBox)
