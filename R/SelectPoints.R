@@ -5,7 +5,7 @@ SelectPoints <- function(boundingBox, graticuleInterval = 0.1, trackPoints = tra
     leafletOutput('myMap'),
     p()
   )
-
+  
   server <- function(input, output, session) {
     
     output$myMap <- renderLeaflet({ShowOSM(boundingBox = boundingBox, 
@@ -13,20 +13,17 @@ SelectPoints <- function(boundingBox, graticuleInterval = 0.1, trackPoints = tra
     )})
     
     observeEvent(input$myMap_click, {
-      click <- input$myMap_click
-      clat <- click$lat
-      clng <- click$lng
+      clickedPoint <- input$myMap_click
+      pointCoords <- c(lon = clickedPoint$lng, lat = clickedPoint$lat)
+      print(pointCoords)
       
-      print(c(clng, clat))
-      print(click)
-      
-      # selectedPoints <<-c(list(c(lon = clng, lat = clat)), selectedPoints)
-      selectedPoints <<- rbind(selectedPoints, c(lon = clng, lat = clat))
+      pointTable <<- rbind(pointTable, pointCoords)
       
       leafletProxy('myMap') %>%
-        addCircles(lng=clng, lat=clat, group='circles',
-                   weight=1, radius=10, color='black', fillColor='green',
-                   fillOpacity=0.2, opacity=1)
+        addCircles(lng = clickedPoint$lng, lat = clickedPoint$lat, group = 'circles',
+                   weight = 1, radius = 10, color = 'black', fillColor = 'green',
+                   fillOpacity = 0.2, opacity = 1
+        )
     })
   }
   
