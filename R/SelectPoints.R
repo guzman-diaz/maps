@@ -1,4 +1,4 @@
-SelectPoints <- function(boundingBox, graticuleInterval = 0.1, trackPoints = trackTable){
+SelectPoints <- function(boundingBox, graticuleInterval = 0.1, trackTable = trackTable){
   
   
   ui <- fluidPage(
@@ -9,7 +9,8 @@ SelectPoints <- function(boundingBox, graticuleInterval = 0.1, trackPoints = tra
   server <- function(input, output, session) {
     
     output$myMap <- renderLeaflet({ShowOSM(boundingBox = boundingBox, 
-                                           graticuleInterval = graticuleInterval, trackPoints = trackTable
+                                           graticuleInterval = graticuleInterval, 
+                                           trackTable = trackTable
     )})
     
     observeEvent(input$myMap_click, {
