@@ -1,5 +1,6 @@
 ShowOSM <- function(boundingBox,
-                    trackPoints = NULL,
+                    trackTable = NULL,
+                    markerTable = NULL,
                     graticuleInterval = 0.1
 ){
   
@@ -34,10 +35,19 @@ ShowOSM <- function(boundingBox,
     )
   
   # Show track
-  if (!is.null(trackPoints)) {
+  if (!is.null(trackTable)) {
     mapObject <- mapObject %>% 
-      addPolylines(map = ., lng = trackPoints$lon, lat = trackPoints$lat, weight = 2, opacity = 0.8)
+      addPolylines(map = ., lng = trackTable$lon, lat = trackTable$lat, weight = 2, opacity = 0.8)
   }
   
+  # Markers
+  if (!is.null(markerTable)){
+    mapObject <- mapObject %>% 
+      addMarkers(lat = markerTable$lat, 
+                 lng = markerTable$lon, 
+                 popup = paste0('No. ', 1:nrow(markerTable))
+      )
+  }
+
   mapObject
 }
