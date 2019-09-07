@@ -5,7 +5,7 @@ ShowOSM <- function(boundingBox,
   
   pacman::p_load(leaflet)
 
-  leaflet() %>%
+  mapObject <- leaflet() %>%
     addTiles(
       paste0(
         'https://{s}.tile.thunderforest.com/cycle/{z}/{x}/{y}.png?apikey=a5e1db75d71d42d8a0c9acf915b1d63b',
@@ -31,10 +31,13 @@ ShowOSM <- function(boundingBox,
                      baseGroups = c('Topographical', 'Road map', 'Satellite'),
                      overlayGroups = c('Graticule'),
                      options = layersControlOptions(collapsed = FALSE)
-    ) %>%
-    { if (!is.null(trackPoints)) 
-      addPolylines(map = ., lng = trackPoints$lon, lat = trackPoints$lat, weight = 2, opacity = 0.8) 
-      else . 
-    }
+    )
   
+  # Show track
+  if (!is.null(trackPoints)) {
+    mapObject <- mapObject %>% 
+      addPolylines(map = ., lng = trackPoints$lon, lat = trackPoints$lat, weight = 2, opacity = 0.8)
+  }
+  
+  mapObject
 }
