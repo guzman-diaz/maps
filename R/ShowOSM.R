@@ -37,7 +37,11 @@ ShowOSM <- function(boundingBox,
   # Show track
   if (!is.null(trackTable)) {
     mapObject <- mapObject %>% 
-      addPolylines(map = ., lng = trackTable$lon, lat = trackTable$lat, weight = 2, opacity = 0.8)
+      addPolylines(map = ., 
+                   lng = trackTable$lon, lat = trackTable$lat, 
+                   weight = 2, opacity = 0.8,
+                   highlightOptions = highlightOptions(bringToFront = T, opacity = 1, weight = 5, sendToBack = FALSE, color = 'white')
+      )
   }
   
   # Markers
