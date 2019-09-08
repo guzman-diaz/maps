@@ -1,5 +1,5 @@
 ShowOSM <- function(boundingBox,
-                    trackTable = NULL,
+                    trackList = NULL,
                     markerTable = NULL,
                     trackName = NULL,
                     graticuleInterval = 0.1
@@ -36,23 +36,31 @@ ShowOSM <- function(boundingBox,
     )
   
   # Show track
-  if (!is.null(trackTable)) {
-    mapObject <- mapObject %>% 
-      addPolylines(map = ., 
-                   lng = trackTable$lon, lat = trackTable$lat, 
+  if (!is.null(trackList)){
+    for (trackId in 1:length(trackList)){
+      mapObject <- mapObject %>%
+      addPolylines(map = .,
+                   lat = trackList[[trackId]]$table$lat, 
+                   lng = trackList[[trackId]]$table$lon,
                    weight = 2, opacity = 0.8,
                    highlightOptions = highlightOptions(bringToFront = T, opacity = 1, weight = 5, sendToBack = FALSE, color = 'white')
       )
+    }
   }
   
   # Markers
-  if (!is.null(markerTable)){
-    mapObject <- mapObject %>% 
-      addMarkers(lat = markerTable$lat, 
-                 lng = markerTable$lon,
-                 layerId = paste(if (!is.null(trackName)) {trackName}, 1:nrow(markerTable)),
-                 popup = paste(if (!is.null(trackName)) {trackName}, 1:nrow(markerTable))
-      )
+  if (!is.null(trackList)){
+    for (trackId in 1:length(trackList)){
+      markerLabels <- as.list(paste0(trackId, '-', 1:nrow(trackList[[trackId]]$table)))
+      mapObject <- mapObject %>% 
+        addCircleMarkers(lat = trackList[[trackId]]$table$lat, 
+                         lng = trackList[[trackId]]$table$lon,
+                         layerId = markerLabels,
+                         label = markerLabels,
+                         stroke = FALSE,fillOpacity = 0.8,
+                         clusterOptions = markerClusterOptions()
+        )
+    }
   }
 
   mapObject
