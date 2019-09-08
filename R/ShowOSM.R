@@ -1,6 +1,7 @@
 ShowOSM <- function(boundingBox,
                     trackTable = NULL,
                     markerTable = NULL,
+                    trackName = NULL,
                     graticuleInterval = 0.1
 ){
   
@@ -48,8 +49,9 @@ ShowOSM <- function(boundingBox,
   if (!is.null(markerTable)){
     mapObject <- mapObject %>% 
       addMarkers(lat = markerTable$lat, 
-                 lng = markerTable$lon, 
-                 popup = paste0('No. ', 1:nrow(markerTable))
+                 lng = markerTable$lon,
+                 layerId = paste(if (!is.null(trackName)) {trackName}, 1:nrow(markerTable)),
+                 popup = paste(if (!is.null(trackName)) {trackName}, 1:nrow(markerTable))
       )
   }
 
