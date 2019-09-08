@@ -18,6 +18,7 @@ SelectPoints <- function(boundingBox,
                                            markerTable = markerTable
     )})
     
+    ## Observe clicks on any point of the map
     observeEvent(input$myMap_click, {
       clickedPoint <- input$myMap_click
       pointCoords <- c(lon = clickedPoint$lng, lat = clickedPoint$lat)
@@ -32,6 +33,7 @@ SelectPoints <- function(boundingBox,
         )
     })
     
+    ## Observe clicks on markers
     observeEvent(input$myMap_marker_click, {
       clickedPoint <- input$myMap_marker_click
       pointCoords <- c(lon = clickedPoint$lng, lat = clickedPoint$lat)
