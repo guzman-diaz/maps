@@ -39,6 +39,8 @@ IGN:
 
 http://centrodedescargas.cnig.es/CentroDescargas/catalogo.do?Serie=LIDAR
 http://www.ign.es/wcts-app/
+https://www.ign.es/iberpix2/visor/
+
 
 Tutorials:
 
@@ -55,16 +57,6 @@ pacman::p_load(geoviz)
 
 sapply(list.files(here::here('R')), function(x) source(here::here('R', x)))
 ```
-
-# Plot OMS wrt a bounding box
-
-```{r}
-boundingBox <- DefineBoundingBox(p1 = c(lon = -7.4, lat = 43.5), p2 = c(lon = -6.0, lat = 42.5))
-
-## Show in map
-ShowOSM(boundingBox, graticuleInterval = 0.1)
-```
-
 
 # Plot track
 
@@ -89,10 +81,18 @@ boundingBox <- DefineBoundingBox(pointTable = trackTable,
                                  p1 = NULL, 
                                  p2 = NULL, 
                                  is.lonLat = T,
-                                 zoomLevel = 1.35
+                                 zoomLevel = 1.1
 )
 
 str(boundingBox)
+```
+
+# Plot OMS wrt a bounding box
+
+http://archived.mhermans.net/hiking-gpx-r-leaflet.html
+
+```{r}
+ShowOSM(boundingBox, graticuleInterval = 0.1, trackTable = trackTable)
 ```
 
 ## Get tiles from IGN
@@ -145,19 +145,28 @@ str(mapData)
 
 ## Get overlay image
 
-Options are:
+Map types are:
 
-- `mapType`: `'World_Topo_Map'`, `'World_Street_Map'`, and `'World_Imagery'`.
+- Topo: `'World_Topo_Map'`, `NatGeo_World_Map`, `'esri-topo'`
 
-- `majorDim`: the image reolution. The larger, the more resolution. 600 for low resolution.
+- Relief: `'apple-iphoto'`, `'World_Street_Map'`, `Ocean_Basemap`
+
+- Picture: `'World_Imagery'`, `'bing'`, `'maptoolkit-topo'`
+
+- Names: `'osm'`, `'opencyclemap'`, `'landscape'`
+
 
 
 ```{r}
 overlayImage <- GetMapImage(boundingBox,
-                            majorDim = 4000,
-                            mapType = 'World_Imagery',
+                            mapType = 'osm',
+                            imageWidth = dim(mapData$elevation)[1],
+                            imageHeight = round(dim(mapData$elevation)[2]),
                             imageFileName = here::here('figs', 'overlay.png')
 )
+
+
+grid::grid.raster(overlayImage)
 
 ```
 
@@ -181,10 +190,10 @@ mapData$elevation %>%
 mapData$elevation %>%
   sphere_shade(texture = 'imhof4', sunangle = 120) %>%
   add_water(detect_water(mapData$elevation, min_area = 25), color = 'imhof3') %>%
-  add_overlay(overlayImage, alphalayer = 0.9) %>%
-  add_shadow(ray_shade(mapData$elevation, zscale = 1, maxsearch = 300), 0.5) %>%
+  add_overlay(overlayImage, alphalayer = 0.0) %>%
+  add_shadow(ray_shade(mapData$elevation, zscale = raster_zscale(rasterObject), maxsearch = 300), 0.5) %>%
   plot_3d(mapData$elevation, 
-          zscale = raster_zscale(rasterObject), 
+          zscale = raster_zscale(rasterObject)*1.001, 
           fov = 0, 
           theta = 135, 
           zoom = 0.6, 
@@ -201,8 +210,45 @@ add_gps_to_rayshader(rasterObject,
                      lat = trackTable$lat, 
                      lon = trackTable$lon, 
                      alt = trackTable$elevation, 
-                     zscale = raster_zscale(rasterObject), 
+                     zscale = raster_zscale(rasterObject),
+                     alpha = 1
 )
 ```
 
 
+
+
+# Select track
+
+## Select points
+
+```{r}
+# Initialize point table
+pointTable <- data.frame(matrix(nrow = 0, ncol = 2)) %>% setNames(c('lon', 'lat'))
+
+# Select points (close window when finished)
+SelectPoints(boundingBox, graticuleInterval = 0.05, trackTable = trackTable, markerTable = trackTable)
+
+# Rename variables
+names(pointTable) <- c('lon', 'lat')
+
+head(pointTable, 3) %>% knitr::kable()
+```
+
+## Define box from track
+
+```{r, results='asis'}
+boundingBox <- DefineBoundingBox(pointTable = pointTable, 
+                                 boundingBox = NULL, 
+                                 p1 = NULL, 
+                                 p2 = NULL, 
+                                 is.lonLat = T,
+                                 zoomLevel = 1.1
+)
+
+str(boundingBox)
+```
+
+```{r}
+ShowOSM(boundingBox, graticuleInterval = 0.1, markerTable = pointTable, trackTable = pointTable)
+```
