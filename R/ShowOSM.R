@@ -1,9 +1,11 @@
 ShowOSM <- function(boundingBox,
                     trackList = NULL,
-                    markerTable = NULL,
-                    trackName = NULL,
                     graticuleInterval = 0.1
 ){
+  
+  if (is.data.frame(trackList)){
+    trackList <- list(list(table = trackList))
+  }
   
   pacman::p_load(leaflet)
 
