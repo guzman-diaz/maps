@@ -51,7 +51,7 @@ ShowOSM <- function(boundingBox,
   # Markers
   if (!is.null(trackList)){
     for (trackId in 1:length(trackList)){
-      markerLabels <- as.list(paste0(trackId, '-', 1:nrow(trackList[[trackId]]$table)))
+      markerLabels <- as.list(paste0(sprintf('%03d', trackId), '-', 1:nrow(trackList[[trackId]]$table)))
       mapObject <- mapObject %>% 
         addCircleMarkers(lat = trackList[[trackId]]$table$lat, 
                          lng = trackList[[trackId]]$table$lon,
