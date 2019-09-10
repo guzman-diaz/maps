@@ -1,4 +1,5 @@
 DefineBoundingBox <- function(pointTable = NULL,
+                              trackList = NULL,
                               boundingBox = NULL, 
                               p1 = NULL, 
                               p2 = NULL, 
@@ -6,6 +7,24 @@ DefineBoundingBox <- function(pointTable = NULL,
                               rasterObject = NULL,
                               zoomLevel = 1
 ){
+  
+  # From track list
+  if (!is.null(trackList)){
+    ## Bind all tables
+    lonLat.corners <- lapply(trackList, function(x) {x <- x$table}) %>% 
+      dplyr::bind_rows() %>% 
+      summarize(max.lon = max(lon), max.lat = max(lat), min.lon = min(lon), min.lat = min(lat))
+    
+    ## Define bbox
+    boundingBox <- DefineBoundingBox(pointTable = NULL, 
+                                     boundingBox = NULL, 
+                                     p1 = c(lon = lonLat.corners$min.lon, lat = lonLat.corners$min.lat), 
+                                     p2 = c(lon = lonLat.corners$max.lon, lat = lonLat.corners$max.lat), 
+                                     is.lonLat = T,
+                                     zoomLevel = 1.1
+    )
+  }
+  
   
   # From raster
   if (!is.null(rasterObject)){
