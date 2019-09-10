@@ -54,6 +54,7 @@ pacman::p_load(rgdal)
 pacman::p_load(proj4)
 pacman::p_load(raster)
 pacman::p_load(geoviz)
+pacman::p_load(shiny)
 
 sapply(list.files(here::here('R')), function(x) source(here::here('R', x)))
 ```
@@ -216,29 +217,80 @@ add_gps_to_rayshader(rasterObject,
 ```
 
 
+# Wikiloc
+
+```{r}
+# (worth checking this as well: https://gist.github.com/holstius/6631918 )
+
+pacman::p_load(maptools)
+
+# List the kmz files in a given folder path
+kmzFileNames <- list.files(here::here('data', 'tracks'), pattern = '*.kmz', full.names = FALSE)
+
+# Unzip each KMZ file 
+trackList <- lapply(kmzFileNames, 
+                 function(x) 
+                   maptools::getKMLcoordinates(kmlfile = unzip(zipfile = paste0(here::here('data', 'tracks'), '/', x),
+                                                               exdir   = here::here('data', 'tracks', 'out')
+                   ), 
+                   ignoreAltitude = FALSE)
+)
+
+# Format list elements
+trackList <- lapply(trackList, function(x) {
+  x <- list(table = data.frame(lon = x[[2]][, 1], lat = x[[2]][, 2]),
+            elevation = x[[2]][, 3]
+  )
+})
+```
+
+```{r}
+# Bind all tables
+lonLat.corners <- lapply(trackList, function(x) {x <- x$table}) %>% 
+  dplyr::bind_rows() %>% 
+  summarize(max.lon = max(lon), max.lat = max(lat), min.lon = min(lon), min.lat = min(lat))
+  
+# Define bbox
+boundingBox <- DefineBoundingBox(pointTable = NULL, 
+                                 boundingBox = NULL, 
+                                 p1 = c(lon = lonLat.corners$min.lon, lat = lonLat.corners$min.lat), 
+                                 p2 = c(lon = lonLat.corners$max.lon, lat = lonLat.corners$max.lat), 
+                                 is.lonLat = T,
+                                 zoomLevel = 1.1
+)
+
+```
+
+```{r}
+ShowOSM(boundingBox, graticuleInterval = 0.1, trackList = trackList)
+```
 
 
-# Select track
+
+# Build track from other tracks and map selections
 
 ## Select points
 
 ```{r}
 # Initialize point table
-pointTable <- data.frame(matrix(nrow = 0, ncol = 2)) %>% setNames(c('lon', 'lat'))
+rm(pointTable)
 
-# Select points (close window when finished)
-SelectPoints(boundingBox, graticuleInterval = 0.05, trackTable = trackTable, markerTable = trackTable)
+# Select points (close window when finished, the result is in `pointTable`)
 
-# Rename variables
-names(pointTable) <- c('lon', 'lat')
-
-head(pointTable, 3) %>% knitr::kable()
+SelectPoints(boundingBox, graticuleInterval = 0.05, trackList = trackList)
 ```
+
+## Build track
+
+```{r}
+trackTable <- BuildTrack(pointTable, trackList)
+```
+
 
 ## Define box from track
 
 ```{r, results='asis'}
-boundingBox <- DefineBoundingBox(pointTable = pointTable, 
+boundingBox <- DefineBoundingBox(pointTable = trackTable, 
                                  boundingBox = NULL, 
                                  p1 = NULL, 
                                  p2 = NULL, 
@@ -250,5 +302,16 @@ str(boundingBox)
 ```
 
 ```{r}
-ShowOSM(boundingBox, graticuleInterval = 0.1, markerTable = pointTable, trackTable = pointTable)
+ShowOSM(boundingBox, graticuleInterval = 0.1, trackList = trackTable)
 ```
+
+
+```{r}
+trackList <- list()
+
+trackList[[1]] <- list(table = trackTable[1:10, ], name = 'track 1')
+trackList[[2]] <- list(table = trackTable[100:130, ], name = 'track 2')
+```
+
+
+
