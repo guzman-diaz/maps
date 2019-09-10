@@ -42,8 +42,10 @@ SelectPoints <- function(boundingBox,
       clickedPoint <- input$myMap_click
       pointCoords <- c(lon = clickedPoint$lng, lat = clickedPoint$lat, id = 'map')
 
-      pointTable <<- rbind(pointTable, as.data.frame(t(pointCoords)))
+      pointTable <<- rbind(pointTable, as.data.frame(t(pointCoords))) %>% 
+        dplyr::distinct(lon, lat, .keep_all = T)
       assign('pointTable', pointTable, envir =  .GlobalEnv)
+      print(sprintf('Point %i added', nrow(pointTable)))
       
       leafletProxy('myMap') %>%
         addCircles(lng = clickedPoint$lng, lat = clickedPoint$lat, group = 'circles',
