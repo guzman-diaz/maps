@@ -12,6 +12,7 @@ SelectPoints <- function(boundingBox,
   
   ui <- fluidPage(
     leafletOutput('myMap'),
+    tags$style(type = "text/css", "#myMap {height: calc(100vh - 80px) !important;}"),
     p()
   )
   
@@ -54,6 +55,5 @@ SelectPoints <- function(boundingBox,
 
   }
   
-  shinyApp(ui, server)
-  
+  runApp(shinyApp(ui, server), launch.browser = F)  
 }
