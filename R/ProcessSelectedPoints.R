@@ -11,7 +11,7 @@ ProcessSelectedPoints <- function(trackList = NULL,
     ) %>% 
       setNames(c('lon', 'lat', 'id', 'dist'))
     assign('pointTable', pointTable, envir = .GlobalEnv)
-    print('New table created')
+    print('New table of points created.')
   }
   
   # Format listened point  
@@ -22,7 +22,6 @@ ProcessSelectedPoints <- function(trackList = NULL,
 
   # Import pointTable
   pointTable <<- pointTable
-  # print(pointTable)
 
   # Last and new rows
   newRow <- pointCoords 
@@ -50,14 +49,28 @@ ProcessSelectedPoints <- function(trackList = NULL,
                                        newRow[1:2],
                                        fun = distHaversine
     )
-    print('diferente')
   } else {
     ## Two points in the same track
-    newRow['dist'] <- geosphere::distm(lastRow[1:2],
-                                       newRow[1:2],
-                                       fun = distHaversine
-    )
-    print('mismo track')
+    ### Get interval of the chunk of records from original track
+    pointInterval <- as.numeric(substring(lastRow$id, 5)):as.numeric(substring(newRow$id, 5))
+
+    ### Get the in-between original coords
+    inBetweenPoints <- trackList[[as.numeric(substr(lastRow$id, 1, 3))]]$table[pointInterval, ]
+    
+    ### If only one record, duplicate to have two points
+    if (nrow(inBetweenPoints) < 2){
+      inBetweenPoints <- rbind(inBetweenPoints, inBetweenPoints)
+    }
+    
+    ### Compute all intermediate distances
+    for (rowId in 2:nrow(inBetweenPoints)){
+      inBetweenPoints[rowId, 'dist'] <- geosphere::distm(inBetweenPoints[rowId-1, c('lon', 'lat')],
+                                               inBetweenPoints[rowId, c('lon', 'lat')],
+                                               fun = distHaversine
+      )
+    }
+
+    newRow['dist'] <- sum(inBetweenPoints[-1, 'dist'])
   }
   
 
@@ -72,11 +85,6 @@ ProcessSelectedPoints <- function(trackList = NULL,
   #   if (pointTable[rowId, 'trackId'] != 'map' & 
   #       pointTable[rowId, 'trackId'] == pointTable[(rowId-1), 'trackId']
   #   ){
-  #     #### Get chunk of records from original track
-  #     pointInterval <- pointTable[rowId-1, 'pointId']:pointTable[rowId, 'pointId']
-  #     newRows <- trackList[[as.numeric(pointTable[rowId, 'trackId'])]]$table[pointInterval, ] %>% 
-  #       dplyr::mutate(trackId = pointTable[rowId, 'trackId'], pointId = pointInterval) %>% 
-  #       as.data.frame()
   #     
   #     #### Insert rows in place
   #     trackTable <- rbind(trackTable, newRows)
