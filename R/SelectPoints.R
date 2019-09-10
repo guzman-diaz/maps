@@ -1,7 +1,6 @@
 SelectPoints <- function(boundingBox, 
                          graticuleInterval = 0.1, 
-                         trackList = NULL,
-                         markerTable = NULL
+                         trackList = NULL
 ){
 
   if (!exists('pointTable', envir = .GlobalEnv)){
@@ -55,5 +54,5 @@ SelectPoints <- function(boundingBox,
 
   }
   
-  runApp(shinyApp(ui, server), launch.browser = F)  
+  shinyApp(ui, server)
 }
