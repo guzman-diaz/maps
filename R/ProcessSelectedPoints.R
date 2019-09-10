@@ -79,32 +79,10 @@ ProcessSelectedPoints <- function(trackList = NULL,
     pointTable <- rbind(pointTable, as.data.frame(newRow))
   }
   
-  # #
-  # for (rowId in 2:nrow(pointTable)){
-  #   ### When two consecutive points have the same trackId
-  #   if (pointTable[rowId, 'trackId'] != 'map' & 
-  #       pointTable[rowId, 'trackId'] == pointTable[(rowId-1), 'trackId']
-  #   ){
-  #     
-  #     #### Insert rows in place
-  #     trackTable <- rbind(trackTable, newRows)
-  #   }
-  #   
-  #   #### Add current row
-  #   trackTable <- rbind(trackTable, pointTable[rowId, ])
-  #   
-  # }
-  # 
-  # # Remove dupes created after inserting
-  # trackTable %<>% dplyr::distinct()
-  # 
-  # 
+  # Export
   assign('pointTable', pointTable, envir =  .GlobalEnv)
-  # 
-  # 
-  # 
-  # # Output
-  # return(trackTable)
-  # 
-  
+
+  # Output
+  return(pointTable)
+
 }
