@@ -19,10 +19,10 @@ ProcessSelectedPoints <- function(trackList = NULL,
     as.data.frame() %>% 
     mutate_if(is.factor, as.character) %>% 
     mutate_at(.vars = c('lon', 'lat'), as.numeric)
-
+  
   # Import pointTable
   pointTable <<- pointTable
-
+  
   # Last and new rows
   newRow <- pointCoords 
   
@@ -38,7 +38,7 @@ ProcessSelectedPoints <- function(trackList = NULL,
     }
     lastRow <- tail(pointTable, 1)
   }
-
+  
   # Add information to new row
   
   if (substr(pointCoords['id'], 1, 3) != substr(lastRow['id'], 1, 3) |
@@ -53,7 +53,7 @@ ProcessSelectedPoints <- function(trackList = NULL,
     ## Two points in the same track
     ### Get interval of the chunk of records from original track
     pointInterval <- as.numeric(substring(lastRow$id, 5)):as.numeric(substring(newRow$id, 5))
-
+    
     ### Get the in-between original coords
     inBetweenPoints <- trackList[[as.numeric(substr(lastRow$id, 1, 3))]]$table[pointInterval, ]
     
@@ -65,15 +65,15 @@ ProcessSelectedPoints <- function(trackList = NULL,
     ### Compute all intermediate distances
     for (rowId in 2:nrow(inBetweenPoints)){
       inBetweenPoints[rowId, 'dist'] <- geosphere::distm(inBetweenPoints[rowId-1, c('lon', 'lat')],
-                                               inBetweenPoints[rowId, c('lon', 'lat')],
-                                               fun = distHaversine
+                                                         inBetweenPoints[rowId, c('lon', 'lat')],
+                                                         fun = distHaversine
       )
     }
-
+    
     newRow['dist'] <- sum(inBetweenPoints[-1, 'dist'])
   }
   
-
+  
   # Remove records with zero distance (duplicates)
   if (as.numeric(newRow['dist']) != 0 | nrow(pointTable) == 0){
     pointTable <- rbind(pointTable, as.data.frame(newRow))
@@ -81,8 +81,8 @@ ProcessSelectedPoints <- function(trackList = NULL,
   
   # Export
   assign('pointTable', pointTable, envir =  .GlobalEnv)
-
+  
   # Output
   return(pointTable)
-
+  
 }
