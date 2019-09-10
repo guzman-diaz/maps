@@ -1,6 +1,5 @@
 AssesTrackOnMap <- function(trackList,
-                            graticuleInterval = 0.1,
-                            go.retainOldTable = F
+                            graticuleInterval = 0.1
 ){
   
   
@@ -41,8 +40,8 @@ AssesTrackOnMap <- function(trackList,
       leafletProxy('myMap') %>%
         addCircles(lng = clickedPoint$lng, lat = clickedPoint$lat, group = 'circles',
                    weight = 1, radius = 5, color = 'black', fillColor = 'green',
-                   fillOpacity = 0.2, opacity = 1#, label = as.character(nrow(pointTable)),
-                   # labelOptions = labelOptions(noHide = T, direction = 'top')
+                   fillOpacity = 0.2, opacity = 1, label = as.character(nrow(pointTable)),
+                   labelOptions = labelOptions(noHide = T, direction = 'top')
         )
     })
 
