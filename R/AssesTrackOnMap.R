@@ -35,7 +35,7 @@ AssesTrackOnMap <- function(trackList,
       clickedPoint <- input$myMap_click
       pointCoords <- c(lon = clickedPoint$lng, lat = clickedPoint$lat, id = 'map')
 
-      ProcessSelectedPoints(trackList = trackList, pointCoords = pointCoords)
+      pointTable <- ProcessSelectedPoints(trackList = trackList, pointCoords = pointCoords)
 
       leafletProxy('myMap') %>%
         addCircles(lng = clickedPoint$lng, lat = clickedPoint$lat, group = 'circles',
@@ -43,6 +43,9 @@ AssesTrackOnMap <- function(trackList,
                    fillOpacity = 0.2, opacity = 1, label = as.character(nrow(pointTable)),
                    labelOptions = labelOptions(noHide = T, direction = 'top')
         )
+      
+      print('---------------------------------------')
+      print(pointTable)
     })
 
   }
