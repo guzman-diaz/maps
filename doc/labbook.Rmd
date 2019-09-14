@@ -307,6 +307,8 @@ ShowOSM(boundingBox, graticuleInterval = 0.1, trackList = trackTable)
 
 ## Import from wikiloc kmz's
 
+From Google Earth, export as `.kmz` to the folder `'data/tracks/'` the folder with the track (the one that includes both the starting point and the polyline).
+
 ```{r, eval=F}
 pacman::p_load(maptools)
 
@@ -330,15 +332,11 @@ trackList <- lapply(trackList, function(x) {
 })
 ```
 
-## Calculate bbox
+## Calculate bbox and show
 
 ```{r, eval=F}
 boundingBox <- DefineBoundingBox(trackList = trackList, zoomLevel = 1.1)
-```
 
-## Show map and tracks
-
-```{r, eval=F}
 ShowOSM(boundingBox, graticuleInterval = 0.1, trackList = trackList)
 ```
 
@@ -355,6 +353,10 @@ rasterObject <- ImportIGNTiles(tileSet,
                                tileResolution = 25,
                                folderName = NULL
 )
+
+# Crop
+rasterObject <- CropRaster(rasterObject, boundingBox)
+
 ```
 
 
@@ -364,10 +366,11 @@ rm(pointTable)
 AssesTrackOnMap(trackList = trackList)
 ```
 
+## Add computed track to the wikiloc list
 
 ```{r}
-# Crop
-rasterObject <- CropRaster(rasterObject, boundingBox)
+trackList <- AddTrackToList(trackTable = pointTable, trackList = trackList)
+
 ```
 
 
