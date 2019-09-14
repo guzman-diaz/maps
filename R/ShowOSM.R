@@ -44,7 +44,13 @@ ShowOSM <- function(boundingBox,
       addPolylines(map = .,
                    lat = trackList[[trackId]]$table$lat, 
                    lng = trackList[[trackId]]$table$lon,
-                   weight = 2, opacity = 0.8,
+                   weight = 3, opacity = 1.0,
+                   color = c('#e6194b', '#3cb44b', '#ffe119', '#4363d8', 
+                             '#f58231', '#911eb4', '#46f0f0', '#f032e6', 
+                             '#bcf60c', '#fabebe', '#008080', '#e6beff', 
+                             '#9a6324', '#fffac8', '#800000', '#aaffc3', 
+                             '#808000', '#ffd8b1', '#000075', '#808080'
+                   )[trackId],
                    highlightOptions = highlightOptions(bringToFront = T, opacity = 1, weight = 5, sendToBack = FALSE, color = 'white')
       )
     }
