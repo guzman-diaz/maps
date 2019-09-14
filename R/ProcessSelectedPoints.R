@@ -9,6 +9,9 @@ ProcessSelectedPoints <- function(trackListL,
                              dist = as.numeric(),
                              gain_pos = as.numeric(),
                              gain_neg = as.numeric(),
+                             cumDist = as.numeric(),
+                             cumGain_pos = as.numeric(),
+                             cumGain_neg = as.numeric(),
                              stringsAsFactors = F
     ) %>% 
       setNames(c('lon', 'lat', 'id', 'dist'))
@@ -102,11 +105,20 @@ ProcessSelectedPoints <- function(trackListL,
     newRow['gain_neg'] <- sum(elevation_diff[elevation_diff <= 0])
   }
   
+  # Initialize remaining field, which must be calculated later from the entire table
+  newRow[c('cumDist', 'cumGain_pos', 'cumGain_neg')] <- 0
   
   # Remove records with zero distance (duplicates)
   if (as.numeric(newRow['dist']) != 0 | nrow(pointTable) == 0){
     pointTable <- rbind(pointTable, as.data.frame(newRow))
   }
+  
+  # Calculate cumulative values
+  pointTable %<>%
+    dplyr::mutate(cumDist = cumsum(dist),
+                  cumGain_pos = cumsum(gain_pos),
+                  cumGain_neg = cumsum(gain_neg)
+    )
   
   # Export
   assign('pointTable', pointTable, envir =  .GlobalEnv)
