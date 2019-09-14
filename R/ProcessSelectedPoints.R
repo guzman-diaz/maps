@@ -1,4 +1,4 @@
-ProcessSelectedPoints <- function(trackList = NULL,
+ProcessSelectedPoints <- function(trackListL,
                                   pointCoords
 ){
   
@@ -7,6 +7,8 @@ ProcessSelectedPoints <- function(trackList = NULL,
                              lat = as.numeric(),
                              id = as.character(),
                              dist = as.numeric(),
+                             gain_pos = as.numeric(),
+                             gain_neg = as.numeric(),
                              stringsAsFactors = F
     ) %>% 
       setNames(c('lon', 'lat', 'id', 'dist'))
@@ -32,10 +34,6 @@ ProcessSelectedPoints <- function(trackList = NULL,
     lastRow <- pointCoords
   } else {
     ## If there are records already, extract last one
-    if (pointCoords$id != 'map'){
-      ### If the point is on a track, remove the duplicated click
-      # pointTable <- pointTable[-nrow(pointTable), ]
-    }
     lastRow <- tail(pointTable, 1)
   }
   
@@ -45,10 +43,24 @@ ProcessSelectedPoints <- function(trackList = NULL,
       substr(pointCoords['id'], 1, 3) == 'map'
   ){
     ## Two points not in the same track
+    
+    ### Distance
     newRow['dist'] <- geosphere::distm(lastRow[1:2],
                                        newRow[1:2],
                                        fun = distHaversine
     )
+    
+    ### Elevation
+    # elevation <- trackList[[as.numeric(substr(pointCoords$id, 1, 3))]]$elevation[as.numeric(substring(pointCoords$id, 5))]
+    elevation_diff <- raster::extract(rasterObject,
+                                      as.data.frame(TransformCoordinates(pointCoords[1:2], is.lonLat = T))
+    ) - raster::extract(rasterObject,
+                        as.data.frame(TransformCoordinates(lastRow[1:2], is.lonLat = T))
+    )
+    
+    newRow['gain_pos'] <- max(elevation_diff, 0)
+    newRow['gain_neg'] <- min(elevation_diff, 0)
+    
   } else {
     ## Two points in the same track
     ### Get interval of the chunk of records from original track
@@ -68,9 +80,26 @@ ProcessSelectedPoints <- function(trackList = NULL,
                                                          inBetweenPoints[rowId, c('lon', 'lat')],
                                                          fun = distHaversine
       )
+      
     }
     
+    ### Retain just the sum to incorporate to the table
     newRow['dist'] <- sum(inBetweenPoints[-1, 'dist'])
+    
+    ### Extract elevation
+    for (rowId in 1:nrow(inBetweenPoints)){
+      inBetweenPoints[rowId, 'elevation'] <- raster::extract(
+        rasterObject,
+        as.data.frame(TransformCoordinates(inBetweenPoints[rowId, c('lon', 'lat')], is.lonLat = T))
+      )
+    }
+    
+    ### Calculate the elevation gain at each point
+    elevation_diff <- diff(inBetweenPoints$elevation)
+
+    ### The result is the sum of positive and negative
+    newRow['gain_pos'] <- sum(elevation_diff[elevation_diff >= 0])
+    newRow['gain_neg'] <- sum(elevation_diff[elevation_diff <= 0])
   }
   
   

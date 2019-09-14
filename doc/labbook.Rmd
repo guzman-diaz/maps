@@ -55,8 +55,14 @@ pacman::p_load(proj4)
 pacman::p_load(raster)
 pacman::p_load(geoviz)
 pacman::p_load(shiny)
+pacman::p_load(leaflet)
+pacman::p_load(geosphere)
+
 
 sapply(list.files(here::here('R')), function(x) source(here::here('R', x)))
+
+# Gijón
+boundingBox <- DefineBoundingBox(p1 = c(lon = -5.75, lat = 43.45), p2 = c(lon = -5.55, lat = 43.6))
 ```
 
 # Plot track
@@ -93,7 +99,7 @@ str(boundingBox)
 http://archived.mhermans.net/hiking-gpx-r-leaflet.html
 
 ```{r}
-ShowOSM(boundingBox, graticuleInterval = 0.1, trackTable = trackTable)
+ShowOSM(boundingBox, graticuleInterval = 0.1, trackList = trackTable)
 ```
 
 ## Get tiles from IGN
@@ -180,7 +186,7 @@ mapData$elevation %>%
                texture = 'imhof4'
   ) %>%
   add_water(detect_water(mapData$elevation, min_area = 500), color = 'imhof3') %>%
-  add_overlay(overlayImage, alphalayer = 0.9) %>%
+  # add_overlay(overlayImage, alphalayer = 0.9) %>%
   plot_map()
 ```
 
@@ -245,21 +251,9 @@ trackList <- lapply(trackList, function(x) {
 ```
 
 ```{r}
-# Bind all tables
-lonLat.corners <- lapply(trackList, function(x) {x <- x$table}) %>% 
-  dplyr::bind_rows() %>% 
-  summarize(max.lon = max(lon), max.lat = max(lat), min.lon = min(lon), min.lat = min(lat))
-  
-# Define bbox
-boundingBox <- DefineBoundingBox(pointTable = NULL, 
-                                 boundingBox = NULL, 
-                                 p1 = c(lon = lonLat.corners$min.lon, lat = lonLat.corners$min.lat), 
-                                 p2 = c(lon = lonLat.corners$max.lon, lat = lonLat.corners$max.lat), 
-                                 is.lonLat = T,
-                                 zoomLevel = 1.1
-)
-
+boundingBox <- DefineBoundingBox(trackList = trackList, zoomLevel = 1.1)
 ```
+
 
 ```{r}
 ShowOSM(boundingBox, graticuleInterval = 0.1, trackList = trackList)
@@ -271,7 +265,7 @@ ShowOSM(boundingBox, graticuleInterval = 0.1, trackList = trackList)
 
 ## Select points
 
-```{r}
+```{r, eval=F}
 # Initialize point table
 rm(pointTable)
 
@@ -282,14 +276,16 @@ SelectPoints(boundingBox, graticuleInterval = 0.05, trackList = trackList)
 
 ## Build track
 
-```{r}
+Using previously captured points:
+
+```{r, eval=F}
 trackTable <- BuildTrack(pointTable, trackList)
 ```
 
 
 ## Define box from track
 
-```{r, results='asis'}
+```{r, eval=F}
 boundingBox <- DefineBoundingBox(pointTable = trackTable, 
                                  boundingBox = NULL, 
                                  p1 = NULL, 
@@ -301,17 +297,77 @@ boundingBox <- DefineBoundingBox(pointTable = trackTable,
 str(boundingBox)
 ```
 
-```{r}
+```{r, eval=F}
 ShowOSM(boundingBox, graticuleInterval = 0.1, trackList = trackTable)
 ```
 
 
-```{r}
-trackList <- list()
 
-trackList[[1]] <- list(table = trackTable[1:10, ], name = 'track 1')
-trackList[[2]] <- list(table = trackTable[100:130, ], name = 'track 2')
+# Investigate set of tracks
+
+## Import from wikiloc kmz's
+
+```{r, eval=F}
+pacman::p_load(maptools)
+
+# List the kmz files in a given folder path
+kmzFileNames <- list.files(here::here('data', 'tracks'), pattern = '*.kmz', full.names = FALSE)
+
+# Unzip each KMZ file 
+trackList <- lapply(kmzFileNames, 
+                 function(x) 
+                   maptools::getKMLcoordinates(kmlfile = unzip(zipfile = paste0(here::here('data', 'tracks'), '/', x),
+                                                               exdir   = here::here('data', 'tracks', 'out')
+                   ), 
+                   ignoreAltitude = FALSE)
+)
+
+# Format list elements (table with lonlat, and elevation)
+trackList <- lapply(trackList, function(x) {
+  x <- list(table = data.frame(lon = x[[2]][, 1], lat = x[[2]][, 2]),
+            elevation = x[[2]][, 3]
+  )
+})
 ```
 
+## Calculate bbox
+
+```{r, eval=F}
+boundingBox <- DefineBoundingBox(trackList = trackList, zoomLevel = 1.1)
+```
+
+## Show map and tracks
+
+```{r, eval=F}
+ShowOSM(boundingBox, graticuleInterval = 0.1, trackList = trackList)
+```
+
+## Get tiles from IGN
+
+```{r, results='asis'}
+# Obtain tile codes
+tileSet <- FindIGNTiles(boundingBox = boundingBox)
+
+print(tileSet)
+
+# Import data into raster objects
+rasterObject <- ImportIGNTiles(tileSet, 
+                               tileResolution = 25,
+                               folderName = NULL
+)
+```
+
+
+```{r, eval=F}
+rm(pointTable)
+
+AssesTrackOnMap(trackList = trackList)
+```
+
+
+```{r}
+# Crop
+rasterObject <- CropRaster(rasterObject, boundingBox)
+```
 
 

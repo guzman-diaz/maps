@@ -1,6 +1,10 @@
 AssesTrackOnMap <- function(trackList,
-                            graticuleInterval = 0.1
+                            graticuleInterval = 0.01
 ){
+  
+  if (is.data.frame(trackList)){
+    trackList <- list(list(table = trackList))
+  }
   
   
   ui <- fluidPage(
