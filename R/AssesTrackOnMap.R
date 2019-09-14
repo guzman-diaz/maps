@@ -1,5 +1,6 @@
 AssesTrackOnMap <- function(trackList,
-                            graticuleInterval = 0.01
+                            graticuleInterval = 0.01,
+                            go.showCumulative = T
 ){
   
   if (is.data.frame(trackList)){
@@ -40,11 +41,17 @@ AssesTrackOnMap <- function(trackList,
       pointCoords <- c(lon = clickedPoint$lng, lat = clickedPoint$lat, id = 'map')
 
       pointTable <- ProcessSelectedPoints(trackList = trackList, pointCoords = pointCoords)
+      
+      if (go.showCumulative){
+        pointText <- sprintf('%.1f km %.0f m', pointTable$cumDist/1e3, pointTable$cumGain_pos) 
+      } else {
+        pointText <- as.character(nrow(pointTable))
+      }
 
       leafletProxy('myMap') %>%
         addCircles(lng = clickedPoint$lng, lat = clickedPoint$lat, group = 'circles',
                    weight = 1, radius = 5, color = 'black', fillColor = 'green',
-                   fillOpacity = 0.2, opacity = 1, label = as.character(nrow(pointTable)),
+                   fillOpacity = 0.2, opacity = 1, label = pointText,
                    labelOptions = labelOptions(noHide = T, direction = 'top')
         )
       
