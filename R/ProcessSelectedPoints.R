@@ -2,6 +2,8 @@ ProcessSelectedPoints <- function(trackListL,
                                   pointCoords
 ){
   
+  # Initialize
+  ## Summary table
   if (!exists('pointTable', envir = .GlobalEnv)){
     pointTable <- data.frame(lon = as.numeric(),
                              lat = as.numeric(),
@@ -13,10 +15,21 @@ ProcessSelectedPoints <- function(trackListL,
                              cumGain_pos = as.numeric(),
                              cumGain_neg = as.numeric(),
                              stringsAsFactors = F
-    ) %>% 
-      setNames(c('lon', 'lat', 'id', 'dist'))
+    )
+    
     assign('pointTable', pointTable, envir = .GlobalEnv)
-    print('New table of points created.')
+    print('New table of points initialized.')
+  }
+  
+  ## Whole track table
+  if (!exists('proposedTrack', envir = .GlobalEnv)){
+    proposedTrack <- data.frame(lon = as.numeric(),
+                             lat = as.numeric(),
+                             stringsAsFactors = F
+    ) 
+    
+    assign('proposedTrack', proposedTrack, envir = .GlobalEnv)
+    print('New track initialized.')
   }
   
   # Format listened point  
@@ -24,11 +37,13 @@ ProcessSelectedPoints <- function(trackListL,
     as.data.frame() %>% 
     mutate_if(is.factor, as.character) %>% 
     mutate_at(.vars = c('lon', 'lat'), as.numeric)
-  
-  # Import pointTable
+
+  # Import tables from global workspace
   pointTable <<- pointTable
   
-  # Last and new rows
+  proposedTrack <<- proposedTrack
+  
+  # Define new row from listened point
   newRow <- pointCoords 
   
   # Last row of the existing point table
@@ -46,7 +61,6 @@ ProcessSelectedPoints <- function(trackListL,
       substr(pointCoords['id'], 1, 3) == 'map'
   ){
     ## Two points not in the same track
-    
     ### Distance
     newRow['dist'] <- geosphere::distm(lastRow[1:2],
                                        newRow[1:2],
@@ -54,7 +68,6 @@ ProcessSelectedPoints <- function(trackListL,
     )
     
     ### Elevation
-    # elevation <- trackList[[as.numeric(substr(pointCoords$id, 1, 3))]]$elevation[as.numeric(substring(pointCoords$id, 5))]
     elevation_diff <- raster::extract(rasterObject,
                                       as.data.frame(TransformCoordinates(pointCoords[1:2], is.lonLat = T))
     ) - raster::extract(rasterObject,
@@ -64,6 +77,9 @@ ProcessSelectedPoints <- function(trackListL,
     newRow['gain_pos'] <- max(elevation_diff, 0)
     newRow['gain_neg'] <- min(elevation_diff, 0)
     
+    ### Update the proposed track
+    proposedTrack <- rbind(proposedTrack, as.data.frame(newRow[c('lon', 'lat')]))
+
   } else {
     ## Two points in the same track
     ### Get interval of the chunk of records from original track
@@ -86,9 +102,14 @@ ProcessSelectedPoints <- function(trackListL,
       
     }
     
-    ### Retain just the sum to incorporate to the table
+    ### Retain just the sum to incorporate to the summary table
     newRow['dist'] <- sum(inBetweenPoints[-1, 'dist'])
     
+    ### Update the proposed track
+    # if (as.numeric(newRow['dist']) != 0 | nrow(proposedTrack) == 0){
+      proposedTrack <- rbind(proposedTrack, as.data.frame(inBetweenPoints[c('lon', 'lat')]))
+    # }
+
     ### Extract elevation
     for (rowId in 1:nrow(inBetweenPoints)){
       inBetweenPoints[rowId, 'elevation'] <- raster::extract(
@@ -112,7 +133,7 @@ ProcessSelectedPoints <- function(trackListL,
   if (as.numeric(newRow['dist']) != 0 | nrow(pointTable) == 0){
     pointTable <- rbind(pointTable, as.data.frame(newRow))
   }
-  
+
   # Calculate cumulative values
   pointTable %<>%
     dplyr::mutate(cumDist = cumsum(dist),
@@ -122,6 +143,7 @@ ProcessSelectedPoints <- function(trackListL,
   
   # Export
   assign('pointTable', pointTable, envir =  .GlobalEnv)
+  assign('proposedTrack', proposedTrack, envir =  .GlobalEnv)
   
   # Output
   return(pointTable)

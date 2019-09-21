@@ -366,8 +366,11 @@ rasterObject <- CropRaster(rasterObject, boundingBox)
 
 ```{r, eval=F}
 rm(pointTable)
+rm(proposedTrack)
 
 AssesTrackOnMap(trackList = trackList)
+
+ShowOSM(boundingBox, graticuleInterval = 0.1, trackList = proposedTrack)
 ```
 
 ## Add computed track to the wikiloc list
@@ -377,4 +380,18 @@ trackList <- AddTrackToList(trackTable = pointTable, trackList = trackList)
 
 ```
 
+
+# Export data frame as kml
+
+
+```{r}
+pacman::p_load(psyosphere)
+
+myTest <- pointTable %>% 
+  dplyr::select(lon, lat) %>% 
+  dplyr::mutate(id = 'este', p_id = 1:nrow(.), time = Sys.Date()) %>% 
+  dplyr::mutate(track_name = 'preba.kml', file_name = 'preba.kml', track_color = 'ff0000ff')
+
+export_kml(myTest, t_id = "id")
+```
 
