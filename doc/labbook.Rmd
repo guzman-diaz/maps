@@ -223,6 +223,52 @@ add_gps_to_rayshader(rasterObject,
 ```
 
 
+## Get track solpe
+
+```{r, results='asis'}
+trackTable$elev_abs <- extract(rasterObject, TransformCoordinates(trackTable, is.lonLat = T))
+
+trackTable %>%head(5) %>% knitr::kable()
+```
+
+```{r}
+testTable <- trackTable
+
+# Compute distance between every two points
+for (rowId in 2:nrow(testTable)){
+  testTable[rowId, 'dist_inc'] <- geosphere::distm(testTable[rowId-1, c('lon', 'lat')],
+                                                         testTable[rowId, c('lon', 'lat')],
+                                                         fun = distHaversine
+  )
+}
+
+# Compute elevation between every two points
+testTable[-1, 'elev_inc'] <- diff(testTable$elev_abs)
+
+# Replace NA by zeros
+testTable[is.na(testTable)] <- 0
+
+# Compute cumulative distance
+testTable$dist_cum <- cumsum(testTable$dist_inc)
+
+# Compute slope
+testTable %<>%
+  dplyr::mutate(slope = elev_inc/dist_inc*100)
+
+# Replace NA by zeros
+testTable[is.na(testTable)] <- 0
+
+# Plot
+ggplot(aes(x = dist_cum/1e3, y = slope),data = testTable) +
+  # geom_line() + 
+  geom_smooth(method = 'loess', span = 0.05, se = F) +
+  scale_x_continuous(breaks = scales::pretty_breaks(n = 10)) +
+  theme_bw() +
+  labs(x = 'km', y = 'slope')
+
+```
+
+
 # Wikiloc
 
 ```{r}
@@ -316,13 +362,15 @@ From Google Earth, export as `.kmz` to the folder `'data/tracks/'` the folder wi
 ```{r, eval=F}
 pacman::p_load(maptools)
 
+trackFolderName <- 'sanIsidro'
+
 # List the kmz files in a given folder path
-kmzFileNames <- list.files(here::here('data', 'tracks'), pattern = '*.kmz', full.names = FALSE)
+kmzFileNames <- list.files(here::here('data', 'tracks', trackFolderName), pattern = '*.kmz', full.names = FALSE)
 
 # Unzip each KMZ file 
 trackList <- lapply(kmzFileNames, 
                  function(x) 
-                   maptools::getKMLcoordinates(kmlfile = unzip(zipfile = paste0(here::here('data', 'tracks'), '/', x),
+                   maptools::getKMLcoordinates(kmlfile = unzip(zipfile = paste0(here::here('data', 'tracks', trackFolderName), '/', x),
                                                                exdir   = here::here('data', 'tracks', 'out')
                    ), 
                    ignoreAltitude = FALSE)
@@ -387,10 +435,10 @@ trackList <- AddTrackToList(trackTable = pointTable, trackList = trackList)
 ```{r}
 pacman::p_load(psyosphere)
 
-myTest <- pointTable %>% 
+myTest <- proposedTrack %>% 
   dplyr::select(lon, lat) %>% 
-  dplyr::mutate(id = 'este', p_id = 1:nrow(.), time = Sys.Date()) %>% 
-  dplyr::mutate(track_name = 'preba.kml', file_name = 'preba.kml', track_color = 'ff0000ff')
+  dplyr::mutate(id = 'myTrack', p_id = 1:nrow(.), time = Sys.Date()) %>% 
+  dplyr::mutate(track_name = 'myTrack.kml', file_name = 'myTrack.kml', track_color = 'ffff00ff')
 
 export_kml(myTest, t_id = "id")
 ```
