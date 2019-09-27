@@ -276,22 +276,32 @@ ggplot(aes(x = dist_cum/1e3, y = slope),data = testTable) +
 
 pacman::p_load(maptools)
 
+subfolderName <- 'llanes'
+
 # List the kmz files in a given folder path
-kmzFileNames <- list.files(here::here('data', 'tracks'), pattern = '*.kmz', full.names = FALSE)
+kmzFileNames <- list.files(here::here('data', 'tracks', subfolderName), pattern = '*.kmz', full.names = FALSE)
 
 # Unzip each KMZ file 
 trackList <- lapply(kmzFileNames, 
                  function(x) 
-                   maptools::getKMLcoordinates(kmlfile = unzip(zipfile = paste0(here::here('data', 'tracks'), '/', x),
+                   maptools::getKMLcoordinates(kmlfile = unzip(zipfile = paste0(here::here('data', 'tracks', subfolderName), '/', x),
                                                                exdir   = here::here('data', 'tracks', 'out')
                    ), 
                    ignoreAltitude = FALSE)
 )
 
+# If more than one track was found unbundled in the folder, flatten the list
+if (length(trackList) > 1){
+  trackList <- unlist(trackList, recursive = FALSE)
+}
+
+# Remove odd elements (useless information)
+trackList <- trackList[[1]][seq(2, length(trackList[[1]]), 2)]
+
 # Format list elements
 trackList <- lapply(trackList, function(x) {
-  x <- list(table = data.frame(lon = x[[2]][, 1], lat = x[[2]][, 2]),
-            elevation = x[[2]][, 3]
+  x <- list(table = data.frame(lon = x[, 1], lat = x[, 2]),
+            elevation = x[, 3]
   )
 })
 ```
