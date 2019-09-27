@@ -369,27 +369,37 @@ ________________________________________________________________________________
 
 From Google Earth, export as `.kmz` to the folder `'data/tracks/'` the folder with the track (the one that includes both the starting point and the polyline).
 
-```{r, eval=F}
+```{r}
+# (worth checking this as well: https://gist.github.com/holstius/6631918 )
+
 pacman::p_load(maptools)
 
-trackFolderName <- 'sanIsidro'
+subfolderName <- 'llanes'
 
 # List the kmz files in a given folder path
-kmzFileNames <- list.files(here::here('data', 'tracks', trackFolderName), pattern = '*.kmz', full.names = FALSE)
+kmzFileNames <- list.files(here::here('data', 'tracks', subfolderName), pattern = '*.kmz', full.names = FALSE)
 
 # Unzip each KMZ file 
 trackList <- lapply(kmzFileNames, 
                  function(x) 
-                   maptools::getKMLcoordinates(kmlfile = unzip(zipfile = paste0(here::here('data', 'tracks', trackFolderName), '/', x),
+                   maptools::getKMLcoordinates(kmlfile = unzip(zipfile = paste0(here::here('data', 'tracks', subfolderName), '/', x),
                                                                exdir   = here::here('data', 'tracks', 'out')
                    ), 
                    ignoreAltitude = FALSE)
 )
 
-# Format list elements (table with lonlat, and elevation)
+# If more than one track was found unbundled in the folder, flatten the list
+if (length(trackList) > 1){
+  trackList <- unlist(trackList, recursive = FALSE)
+}
+
+# Remove odd elements (useless information)
+trackList <- trackList[[1]][seq(2, length(trackList[[1]]), 2)]
+
+# Format list elements
 trackList <- lapply(trackList, function(x) {
-  x <- list(table = data.frame(lon = x[[2]][, 1], lat = x[[2]][, 2]),
-            elevation = x[[2]][, 3]
+  x <- list(table = data.frame(lon = x[, 1], lat = x[, 2]),
+            elevation = x[, 3]
   )
 })
 ```
@@ -419,23 +429,22 @@ rasterObject <- ImportIGNTiles(tileSet,
 # Crop
 rasterObject <- CropRaster(rasterObject, boundingBox)
 
+# Save raster
+saveRDS(rasterObject, here::here('output', paste(subfolderName, '.rds', sep = '')))
+
 ```
 
 
 ```{r, eval=F}
+rasterObject <- readRDS(here::here('output', paste(subfolderName, '.rds', sep = '')))
+
+
 rm(pointTable)
 rm(proposedTrack)
 
 AssesTrackOnMap(trackList = trackList)
 
 ShowOSM(boundingBox, graticuleInterval = 0.1, trackList = proposedTrack)
-```
-
-## Add computed track to the wikiloc list
-
-```{r}
-trackList <- AddTrackToList(trackTable = pointTable, trackList = trackList)
-
 ```
 
 
@@ -445,11 +454,25 @@ trackList <- AddTrackToList(trackTable = pointTable, trackList = trackList)
 ```{r}
 pacman::p_load(psyosphere)
 
-myTest <- proposedTrack %>% 
-  dplyr::select(lon, lat) %>% 
-  dplyr::mutate(id = 'myTrack', p_id = 1:nrow(.), time = Sys.Date()) %>% 
-  dplyr::mutate(track_name = 'myTrack.kml', file_name = 'myTrack.kml', track_color = 'ffff00ff')
+trackName <- 'Llanes_01.kml'
 
-export_kml(myTest, t_id = "id")
+proposedTrack %>% 
+  dplyr::select(lon, lat) %>% 
+  dplyr::mutate(id = trackName, p_id = 1:nrow(.), time = Sys.Date()) %>% 
+  dplyr::mutate(track_name = trackName, 
+                file_name = here::here('output',trackName), 
+                track_color = '00ff33ff'
+  ) %>% 
+
+export_kml(t_id = 'id')
 ```
+
+
+# Add computed track to the wikiloc list
+
+```{r}
+trackList <- AddTrackToList(trackTable = pointTable, trackList = trackList)
+
+```
+
 
