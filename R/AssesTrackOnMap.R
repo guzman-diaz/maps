@@ -15,6 +15,7 @@ AssesTrackOnMap <- function(trackList,
   ui <- fluidPage(
     leafletOutput('myMap'),
     tags$style(type = "text/css", "#myMap {height: calc(100vh - 80px) !important;}"),
+    actionButton('ending', 'Done'),
     p()
   )
   
@@ -26,6 +27,10 @@ AssesTrackOnMap <- function(trackList,
     )})
     
     ## Observe clicks on markers
+    observeEvent(input$ending, {
+      stopApp()
+    })
+    
     observeEvent(input$myMap_marker_click, {
       clickedPoint <- input$myMap_marker_click
       pointCoords <- c(lon = clickedPoint$lng, lat = clickedPoint$lat, id = clickedPoint$id)
