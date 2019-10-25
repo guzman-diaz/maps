@@ -2,7 +2,6 @@ InvestigateTrack <- function(trackContainerFolder,
                              go.useStoredRaste = TRUE
                              ){
   
-  # pacman::p_load(rayshader)
   pacman::p_load(rgdal)
   pacman::p_load(proj4)
   pacman::p_load(raster)
@@ -10,7 +9,6 @@ InvestigateTrack <- function(trackContainerFolder,
   pacman::p_load(shiny)
   pacman::p_load(leaflet)
   pacman::p_load(maptools)
-  # pacman::p_load(geosphere)
 
   source(here::here('R', 'DefineBoundingBox.R'))  
   source(here::here('R', 'ShowOSM.R'))  
@@ -95,6 +93,5 @@ InvestigateTrack <- function(trackContainerFolder,
   rm(proposedTrack, envir = .GlobalEnv)
   
   AssesTrackOnMap(trackList = trackList, boundingBox = boundingBox, rasterObject = rasterObject)
-  
-  # ShowOSM(boundingBox, graticuleInterval = 0.1, trackList = proposedTrack)
+
 }
