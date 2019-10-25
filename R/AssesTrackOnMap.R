@@ -1,7 +1,11 @@
 AssesTrackOnMap <- function(trackList,
                             graticuleInterval = 0.01,
-                            go.showCumulative = T
+                            go.showCumulative = T,
+                            boundingBox = boundingBox,
+                            rasterObject
 ){
+  
+  source(here::here('R', 'ProcessSelectedPoints.R'))
   
   if (is.data.frame(trackList)){
     trackList <- list(list(table = trackList))
@@ -26,7 +30,7 @@ AssesTrackOnMap <- function(trackList,
       clickedPoint <- input$myMap_marker_click
       pointCoords <- c(lon = clickedPoint$lng, lat = clickedPoint$lat, id = clickedPoint$id)
 
-      ProcessSelectedPoints(trackList = trackList, pointCoords = pointCoords)
+      ProcessSelectedPoints(trackList = trackList, pointCoords = pointCoords, rasterObject = rasterObject)
 
       leafletProxy('myMap') %>%
         addCircles(lng = clickedPoint$lng, lat = clickedPoint$lat, group = 'circles',
@@ -40,7 +44,7 @@ AssesTrackOnMap <- function(trackList,
       clickedPoint <- input$myMap_click
       pointCoords <- c(lon = clickedPoint$lng, lat = clickedPoint$lat, id = 'map')
 
-      pointTable <- ProcessSelectedPoints(trackList = trackList, pointCoords = pointCoords)
+      pointTable <- ProcessSelectedPoints(trackList = trackList, pointCoords = pointCoords, rasterObject = rasterObject)
       
       if (go.showCumulative){
         pointText <- sprintf('%.1f km %.0f m', pointTable$cumDist/1e3, pointTable$cumGain_pos) 

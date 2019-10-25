@@ -1,5 +1,6 @@
 ProcessSelectedPoints <- function(trackListL,
-                                  pointCoords
+                                  pointCoords,
+                                  rasterObject
 ){
   
   # Initialize
@@ -62,9 +63,8 @@ ProcessSelectedPoints <- function(trackListL,
   ){
     ## Two points not in the same track
     ### Distance
-    newRow['dist'] <- geosphere::distm(lastRow[1:2],
-                                       newRow[1:2],
-                                       fun = distHaversine
+    newRow['dist'] <- geosphere::distHaversine(lastRow[1:2],
+                                       newRow[1:2]
     )
     
     ### Elevation
@@ -95,9 +95,8 @@ ProcessSelectedPoints <- function(trackListL,
     
     ### Compute all intermediate distances
     for (rowId in 2:nrow(inBetweenPoints)){
-      inBetweenPoints[rowId, 'dist'] <- geosphere::distm(inBetweenPoints[rowId-1, c('lon', 'lat')],
-                                                         inBetweenPoints[rowId, c('lon', 'lat')],
-                                                         fun = distHaversine
+      inBetweenPoints[rowId, 'dist'] <- geosphere::distHaversine(inBetweenPoints[rowId-1, c('lon', 'lat')],
+                                                         inBetweenPoints[rowId, c('lon', 'lat')]
       )
       
     }

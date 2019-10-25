@@ -71,5 +71,5 @@ ShowOSM <- function(boundingBox,
     }
   }
 
-  mapObject
+  print(mapObject)
 }
