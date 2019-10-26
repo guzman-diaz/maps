@@ -1,4 +1,5 @@
 InvestigateTrack <- function(trackContainerFolder,
+                             boundingBox = NULL,
                              go.useStoredRaste = TRUE
                              ){
   
@@ -52,7 +53,9 @@ InvestigateTrack <- function(trackContainerFolder,
   
   
   # Calculate bbox and show
-  boundingBox <- DefineBoundingBox(trackList = trackList, zoomLevel = 1.1)
+  if (is.null(boundingBox)){
+    boundingBox <- DefineBoundingBox(trackList = trackList, zoomLevel = 1.1)
+  }
   
   ShowOSM(boundingBox, graticuleInterval = 0.1, trackList = trackList)
   

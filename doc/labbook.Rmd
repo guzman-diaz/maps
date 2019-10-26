@@ -63,6 +63,7 @@ sapply(list.files(here::here('R')), function(x) source(here::here('R', x)))
 
 # Gijón
 boundingBox <- DefineBoundingBox(p1 = c(lon = -5.75, lat = 43.45), p2 = c(lon = -5.55, lat = 43.6))
+ShowOSM(boundingBox = boundingBox)
 ```
 
 # Plot track
@@ -258,13 +259,13 @@ trackTable[is.na(trackTable)] <- 0
 library(ggplot2)
 ggplot(aes(x = dist_cum/1e3, y = slope),data = trackTable) +
   geom_line() + 
-  geom_smooth(method = 'loess', span = 0.05, se = F) +
+  # geom_smooth(method = 'loess', span = 0.05, se = F) +
   scale_x_continuous(breaks = scales::pretty_breaks(n = 10)) +
   theme_bw() +
   labs(x = 'km', y = 'slope')
 
 ```
-
+___________________________________________________________________________________
 
 # Wikiloc
 
@@ -313,49 +314,6 @@ ShowOSM(boundingBox, graticuleInterval = 0.1, trackList = trackList)
 ```
 
 
-
-# Build track from other tracks and map selections
-
-## Select points
-
-```{r, eval=F}
-# Initialize point table
-rm(pointTable)
-
-# Select points (close window when finished, the result is in `pointTable`)
-
-SelectPoints(boundingBox, graticuleInterval = 0.05, trackList = trackList)
-```
-
-## Build track
-
-Using previously captured points:
-
-```{r, eval=F}
-trackTable <- BuildTrack(pointTable, trackList)
-```
-
-
-## Define box from track
-
-```{r, eval=F}
-boundingBox <- DefineBoundingBox(pointTable = trackTable, 
-                                 boundingBox = NULL, 
-                                 p1 = NULL, 
-                                 p2 = NULL, 
-                                 is.lonLat = T,
-                                 zoomLevel = 1.1
-)
-
-str(boundingBox)
-```
-
-```{r, eval=F}
-ShowOSM(boundingBox, graticuleInterval = 0.1, trackList = trackTable)
-```
-
-
-
 ______________________________________________________________________________________________
 
 
@@ -371,7 +329,7 @@ From Google Earth, export as `.kmz` to the folder `'data/tracks/'` the folder wi
 
 pacman::p_load(maptools)
 
-subfolderName <- 'llanes'
+subfolderName <- 'luna'
 
 # List the kmz files in a given folder path
 kmzFileNames <- list.files(here::here('data', 'tracks', subfolderName), pattern = '*.kmz', full.names = FALSE)
@@ -427,13 +385,13 @@ rasterObject <- ImportIGNTiles(tileSet,
 rasterObject <- CropRaster(rasterObject, boundingBox)
 
 # Save raster
-saveRDS(rasterObject, here::here('output', paste(subfolderName, '.rds', sep = '')))
+saveRDS(rasterObject, here::here('data', 'tracks', trackContainerFolder, 'rasterObject.rds'))
 
 ```
 
 
 ```{r, eval=F}
-rasterObject <- readRDS(here::here('output', paste(subfolderName, '.rds', sep = '')))
+rasterObject <- readRDS(here::here('data', 'tracks', trackContainerFolder, 'rasterObject.rds'))
 
 
 rm(pointTable)
@@ -451,7 +409,7 @@ ShowOSM(boundingBox, graticuleInterval = 0.1, trackList = proposedTrack)
 ```{r}
 pacman::p_load(psyosphere)
 
-trackName <- 'Llanes_01.kml'
+trackName <- 'Gradura_01.kml'
 
 proposedTrack %>% 
   dplyr::select(lon, lat) %>% 
