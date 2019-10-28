@@ -1,5 +1,5 @@
 AssesTrackOnMap <- function(trackList,
-                            graticuleInterval = 0.01,
+                            graticuleInterval = 0.1,
                             go.showCumulative = T
 ){
   
@@ -22,9 +22,11 @@ AssesTrackOnMap <- function(trackList,
                                            trackList = trackList
     )})
     
+    ## Observe "Done" button events
     observeEvent(input$doneButton, {
       stopApp()
     })
+    
     ## Observe clicks on markers
     observeEvent(input$myMap_marker_click, {
       clickedPoint <- input$myMap_marker_click
@@ -61,6 +63,8 @@ AssesTrackOnMap <- function(trackList,
       
       print('---------------------------------------')
       print(pointTable)
+      
+      
     })
 
   }
