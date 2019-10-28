@@ -25,14 +25,14 @@ SelectMapArea <- function(boundingBox = NULL,
     ## Observe "Done" button events
     observeEvent(input$doneButton, {
       boundingBox <- DefineBoundingBox(
-        p1 = c(lon = input$myMap_bounds$south,
-               lat = input$myMap_bounds$west
+        p1 = c(lon = input$myMap_bounds$west,
+               lat = input$myMap_bounds$south
         ),
-        p2 = c(lon = input$myMap_bounds$north,
-               lat = input$myMap_bounds$east
+        p2 = c(lon = input$myMap_bounds$east,
+               lat = input$myMap_bounds$north
         )
       )
-      boundingBox ->> boundingBox
+      assign('boundingBox', boundingBox, envir = .GlobalEnv)
       stopApp()
     })
     

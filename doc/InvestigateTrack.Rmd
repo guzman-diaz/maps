@@ -102,7 +102,11 @@ ShowOSM(boundingBox, graticuleInterval = 0.1, trackList = trackList)
 # Manually define the bounding box
 
 ```{r}
+rm(boundingBox)
+
 SelectMapArea()
+
+ShowOSM(boundingBox, graticuleInterval = 0.1)
 ```
 
 
@@ -132,6 +136,7 @@ rasterObject <- CropRaster(rasterObject, boundingBox)
 saveRDS(rasterObject, here::here('data', 'tracks', containerFolder, 'rasterObject.rds'))
 
 ```
+
 
 # Investigate proposed track
 
