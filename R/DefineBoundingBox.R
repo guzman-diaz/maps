@@ -16,13 +16,8 @@ DefineBoundingBox <- function(pointTable = NULL,
       summarize(max.lon = max(lon), max.lat = max(lat), min.lon = min(lon), min.lat = min(lat))
     
     ## Define bbox
-    boundingBox <- DefineBoundingBox(pointTable = NULL, 
-                                     boundingBox = NULL, 
-                                     p1 = c(lon = lonLat.corners$min.lon, lat = lonLat.corners$min.lat), 
-                                     p2 = c(lon = lonLat.corners$max.lon, lat = lonLat.corners$max.lat), 
-                                     is.lonLat = T,
-                                     zoomLevel = 1.1
-    )
+    p1 = c(lon = lonLat.corners$min.lon, lat = lonLat.corners$min.lat) 
+    p2 = c(lon = lonLat.corners$max.lon, lat = lonLat.corners$max.lat) 
   }
   
   
