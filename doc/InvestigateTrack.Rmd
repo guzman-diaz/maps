@@ -61,7 +61,7 @@ From Google Earth, first export as `.kmz` to the folder `'data/tracks/'` the fol
 
 ```{r}
 
-containerFolder <- 'sanIsidro'
+containerFolder <- 'luna'
 
 # List the kmz files in a given folder path
 kmzFileNames <- list.files(here::here('data', 'tracks', containerFolder), pattern = '*.kmz', full.names = FALSE)
@@ -99,13 +99,21 @@ ShowOSM(boundingBox, graticuleInterval = 0.1, trackList = trackList)
 ```
 
 
+# Manually define the bounding box
+
+```{r}
+SelectMapArea()
+```
+
+
 # Get tiles from IGN
+
+## Download
 
 ```{r, results='asis'}
 # Obtain tile codes
-tileSet <- FindIGNTiles(boundingBox = boundingBox)
-
-print(tileSet)
+tileSet <- FindIGNTiles(boundingBox = boundingBox) %T>% 
+  print()
 
 # Import data into raster objects
 rasterObject <- ImportIGNTiles(tileSet, 
@@ -115,7 +123,11 @@ rasterObject <- ImportIGNTiles(tileSet,
 
 # Crop
 rasterObject <- CropRaster(rasterObject, boundingBox)
+```
 
+## Save in conatiner folder
+
+```{r, results='asis'}
 # Save raster
 saveRDS(rasterObject, here::here('data', 'tracks', containerFolder, 'rasterObject.rds'))
 
@@ -128,6 +140,7 @@ go.usePreviousTrack = FALSE
 
 # Load raster object
 rasterObject <- readRDS(here::here('data', 'tracks', containerFolder, 'rasterObject.rds'))
+plot(rasterObject)
 
 # Launch shiny app
 if (!go.usePreviousTrack){
