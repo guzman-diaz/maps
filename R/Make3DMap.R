@@ -108,4 +108,13 @@ Make3DMap <- function(go_boundBox = FALSE,
     
   }
   
+  ## Transform elevation to matrix
+  elevationData_matrix <- rayshader::raster_to_matrix(elevationData_raster)
+
+  ## Remove NAs (ocean)
+  elevationData_matrix[is.na(elevationData_matrix)] <- 0
+  
+  # Plot
+  plot_3d(tifData_matrix_all, elevationData_matrix, windowsize = c(1100,900), zscale = 50, shadowdepth = -50,
+          zoom=0.5, phi=45,theta=-45,fov=70, background = "#F2E1D0", shadowcolor = "#523E2B")
 }
