@@ -59,8 +59,30 @@ Make3DMap <- function(go_boundBox = FALSE,
       raster::crop(c(boundingBox$p1$x, boundingBox$p2$x, boundingBox$p1$y, boundingBox$p2$y))
   }
   
+  ## Plot
   if (go_plot_tif){
     raster::plotRGB(tifData_raster)
   }
+  
+  
+  ## Transform:
+    
+  ### Transform each band to array
+  tifData_matrix_1 <- rayshader::raster_to_matrix(tifData_raster[[1]])
+  tifData_matrix_2 <- rayshader::raster_to_matrix(tifData_raster[[2]])
+  tifData_matrix_3 <- rayshader::raster_to_matrix(tifData_raster[[3]])
+  
+  ### Merge band arrays into one tensor:
+  #### Initialize
+  tifData_matrix_all <- array(0, dim = c(nrow(tifData_matrix_1), ncol(tifData_matrix_1), 3))
+  
+  #### Merge
+  tifData_matrix_all[, , 1] <- tifData_matrix_1/255 
+  tifData_matrix_all[, , 2] <- tifData_matrix_2/255 
+  tifData_matrix_all[, , 3] <- tifData_matrix_3/255
+  
+  #### Transpose to abide by the elevation raster orientation
+  tifData_matrix_all <- aperm(tifData_matrix_all, c(2, 1, 3))
+
   
 }
