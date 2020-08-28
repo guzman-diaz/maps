@@ -1,5 +1,5 @@
 Make3DMap <- function(go_boundBox = FALSE,
-                      go_mask_elevation = FALSE,
+                      go_mask_elevation = TRUE,
                       go_mask_tif = FALSE,
                       tif_folder = '\\\\pocpaco\\maps\\overlays\\',
                       tif_name = 'Asturias_1980_georef.tif',
@@ -84,5 +84,28 @@ Make3DMap <- function(go_boundBox = FALSE,
   #### Transpose to abide by the elevation raster orientation
   tifData_matrix_all <- aperm(tifData_matrix_all, c(2, 1, 3))
 
+  
+  # Elevation raster
+  
+  ## Load
+  elevationData_raster <- readRDS(here::here('output', 'rasterObject_Asturias.rds'))
+  cat(sprintf('Elevation CRS: %s\n', raster::crs(elevationData_raster)))
+
+  ## Mask
+  if (go_mask_elevation){
+    mapShape <- readRDS(paste0(shape_folder, shape_name)) %>% 
+      sp::spTransform(CRSobj = crs(elevationData_raster))
+
+    elevationData_raster <- elevationData_raster %>% 
+      raster::crop(extent(mapShape)) %>% 
+      raster::mask(mapShape)
+  }
+ 
+  ## Crop by the bounding box
+  if (go_boundBox){
+    elevationData_raster <- elevationData_raster %>% 
+      raster::crop(c(boundingBox$p1$x, boundingBox$p2$x, boundingBox$p1$y, boundingBox$p2$y))
+    
+  }
   
 }
