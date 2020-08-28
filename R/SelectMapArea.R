@@ -1,5 +1,6 @@
 SelectMapArea <- function(boundingBox = NULL,
-                          graticuleInterval = 0.1
+                          graticuleInterval = 0.1,
+                          environment
 ){
   
   if (is.null(boundingBox)){
@@ -32,7 +33,7 @@ SelectMapArea <- function(boundingBox = NULL,
                lat = input$myMap_bounds$north
         )
       )
-      assign('boundingBox', boundingBox, envir = .GlobalEnv)
+      assign('boundingBox', boundingBox, envir = environment)
       stopApp()
     })
     
