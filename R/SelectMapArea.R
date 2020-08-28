@@ -38,5 +38,8 @@ SelectMapArea <- function(boundingBox = NULL,
     
   }
   
-  shinyApp(ui, server)
+  app <- shinyApp(ui = ui, server = server)
+  
+  runApp(app)
+
 }
