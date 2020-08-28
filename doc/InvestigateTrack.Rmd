@@ -61,28 +61,32 @@ From Google Earth, first export as `.kmz` to the folder `'data/tracks/'` the fol
 
 ```{r}
 
-containerFolder <- 'luna'
+containerFolder <- 'sanIsidro'
 
 # List the kmz files in a given folder path
 kmzFileNames <- list.files(here::here('data', 'tracks', containerFolder), pattern = '*.kmz', full.names = FALSE)
 
 # Unzip each KMZ file 
 trackList <- lapply(kmzFileNames, 
-                 function(x) 
-                   maptools::getKMLcoordinates(kmlfile = unzip(zipfile = paste0(here::here('data', 'tracks', containerFolder), '/', x),
-                                                               exdir   = here::here('data', 'tracks', 'out')
-                   ), 
-                   ignoreAltitude = FALSE)
+                    function(x) 
+                      maptools::getKMLcoordinates(kmlfile = unzip(zipfile = paste0(here::here('data', 'tracks', containerFolder), '/', x),
+                                                                  exdir = here::here('data', 'tracks', 'out')
+                      ), 
+                      ignoreAltitude = FALSE)
 )
 
 # If more than one track was found unbundled in the folder, flatten the list
 if (length(trackList) > 1){
   trackList <- unlist(trackList, recursive = FALSE)
   ## Remove odd elements (useless information)
-  trackList <- trackList[seq(2, length(trackList), 2)]
+  trackList <- lapply(trackList, function(x) {if (nrow(x) == 1) {NULL} else {x}})
+  trackList[sapply(trackList, is.null)] <- NULL
 } else {
+  trackList <- unlist(trackList, recursive = FALSE)
   ## Remove odd elements (useless information)
-  trackList <- trackList[[1]][seq(2, length(trackList[[1]]), 2)]
+  # trackList <- trackList[[1]][seq(2, length(trackList[[1]]), 2)]
+  trackList <- lapply(trackList, function(x) {if (nrow(x) == 1) {NULL} else {x}})
+  trackList[sapply(trackList, is.null)] <- NULL
 }
 
 # Format list elements
@@ -127,18 +131,14 @@ rasterObject <- ImportIGNTiles(tileSet,
 
 # Crop
 rasterObject <- CropRaster(rasterObject, boundingBox)
-```
 
-## Save in conatiner folder
-
-```{r, results='asis'}
 # Save raster
 saveRDS(rasterObject, here::here('data', 'tracks', containerFolder, 'rasterObject.rds'))
 
 ```
 
 
-# Investigate proposed track
+# Pick points of track
 
 ```{r, eval=F}
 go.usePreviousTrack = FALSE
@@ -153,7 +153,7 @@ if (!go.usePreviousTrack){
   rm(proposedTrack)
 }
 
-AssesTrackOnMap(trackList = trackList)
+AssesTrackOnMap(trackList = if (exists('trackList')) {trackList} else {NULL})
 
 # Show result
 ShowOSM(boundingBox, graticuleInterval = 1, trackList = proposedTrack)
@@ -163,7 +163,7 @@ ShowOSM(boundingBox, graticuleInterval = 1, trackList = proposedTrack)
 # Export data frame as kml
 
 ```{r}
-trackName <- 'Gradura_01.kml'
+trackName <- 'Obiu.kml'
 
 proposedTrack %>% 
   dplyr::select(lon, lat) %>% 
@@ -174,13 +174,4 @@ proposedTrack %>%
   ) %>% 
 export_kml(t_id = 'id')
 ```
-
-
-# Add computed track to the wikiloc list
-
-```{r}
-trackList <- AddTrackToList(trackTable = pointTable, trackList = trackList)
-
-```
-
 
