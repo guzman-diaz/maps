@@ -1,11 +1,7 @@
 AssesTrackOnMap <- function(trackList,
                             graticuleInterval = 0.01,
-                            go.showCumulative = T,
-                            boundingBox = boundingBox,
-                            rasterObject
+                            go.showCumulative = T
 ){
-  
-  source(here::here('R', 'ProcessSelectedPoints.R'))
   
   if (is.data.frame(trackList)){
     trackList <- list(list(table = trackList))
@@ -15,7 +11,6 @@ AssesTrackOnMap <- function(trackList,
   ui <- fluidPage(
     leafletOutput('myMap'),
     tags$style(type = "text/css", "#myMap {height: calc(100vh - 80px) !important;}"),
-    actionButton('ending', 'Done'),
     p()
   )
   
@@ -26,21 +21,12 @@ AssesTrackOnMap <- function(trackList,
                                            trackList = trackList
     )})
     
-    ## Observe "Done" button events
-    observeEvent(input$doneButton, {
-      stopApp()
-    })
-    
     ## Observe clicks on markers
-    observeEvent(input$ending, {
-      stopApp()
-    })
-    
     observeEvent(input$myMap_marker_click, {
       clickedPoint <- input$myMap_marker_click
       pointCoords <- c(lon = clickedPoint$lng, lat = clickedPoint$lat, id = clickedPoint$id)
 
-      ProcessSelectedPoints(trackList = trackList, pointCoords = pointCoords, rasterObject = rasterObject)
+      ProcessSelectedPoints(trackList = trackList, pointCoords = pointCoords)
 
       leafletProxy('myMap') %>%
         addCircles(lng = clickedPoint$lng, lat = clickedPoint$lat, group = 'circles',
@@ -54,7 +40,7 @@ AssesTrackOnMap <- function(trackList,
       clickedPoint <- input$myMap_click
       pointCoords <- c(lon = clickedPoint$lng, lat = clickedPoint$lat, id = 'map')
 
-      pointTable <- ProcessSelectedPoints(trackList = trackList, pointCoords = pointCoords, rasterObject = rasterObject)
+      pointTable <- ProcessSelectedPoints(trackList = trackList, pointCoords = pointCoords)
       
       if (go.showCumulative){
         pointText <- sprintf('%.1f km %.0f m', pointTable$cumDist/1e3, pointTable$cumGain_pos) 
@@ -71,8 +57,6 @@ AssesTrackOnMap <- function(trackList,
       
       print('---------------------------------------')
       print(pointTable)
-      
-      
     })
 
   }

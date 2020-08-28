@@ -1,8 +1,13 @@
 AssesTrackOnMap <- function(trackList,
+<<<<<<< HEAD
                             graticuleInterval = 0.01,
                             go.showCumulative = T,
                             boundingBox = boundingBox,
                             rasterObject
+=======
+                            graticuleInterval = 0.1,
+                            go.showCumulative = T
+>>>>>>> feature_1
 ){
   
   source(here::here('R', 'ProcessSelectedPoints.R'))
@@ -15,7 +20,11 @@ AssesTrackOnMap <- function(trackList,
   ui <- fluidPage(
     leafletOutput('myMap'),
     tags$style(type = "text/css", "#myMap {height: calc(100vh - 80px) !important;}"),
+<<<<<<< HEAD
     actionButton('ending', 'Done'),
+=======
+    actionButton('doneButton', 'Done'),
+>>>>>>> feature_1
     p()
   )
   

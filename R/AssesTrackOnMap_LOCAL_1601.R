@@ -26,11 +26,6 @@ AssesTrackOnMap <- function(trackList,
                                            trackList = trackList
     )})
     
-    ## Observe "Done" button events
-    observeEvent(input$doneButton, {
-      stopApp()
-    })
-    
     ## Observe clicks on markers
     observeEvent(input$ending, {
       stopApp()
@@ -71,8 +66,6 @@ AssesTrackOnMap <- function(trackList,
       
       print('---------------------------------------')
       print(pointTable)
-      
-      
     })
 
   }

@@ -186,7 +186,7 @@ mapData$elevation %>%
   sphere_shade(sunangle = 270,
                texture = 'imhof4'
   ) %>%
-  add_water(detect_water(mapData$elevation, min_area = 500), color = 'imhof3') %>%
+  # add_water(detect_water(mapData$elevation, min_area = 500), color = 'imhof3') %>%
   # add_overlay(overlayImage, alphalayer = 0.9) %>%
   plot_map()
 ```
@@ -430,4 +430,222 @@ trackList <- AddTrackToList(trackTable = pointTable, trackList = trackList)
 
 ```
 
+
+________________________________________________________________________________________________
+
+# Scrap Ensidesa's web
+
+```{r}
+pacman::p_load(rvest)
+pacman::p_load(stringr)
+
+# Loop through all panels
+for (pageId in seq(50, 109)){
+  ## Build url
+  mainUrl <- paste('http://www.gmensidesa.com/PANEL/P',
+                                    pageId,
+                                    '/P',
+                                    pageId, 
+                                    '0.HTML',
+                                    sep = ''
+  )
+  
+  ## Get main page content
+  pageContent <- xml2::read_html(mainUrl)
+
+  ## Get the .zip file url
+  zipName <- pageContent %>%
+    ### find all links
+    html_nodes('a') %>%       
+    ### get the url
+    html_attr('href') %>%     
+    ### find those that end in ZIP
+    str_subset('\\.ZIP') %T>% 
+    print()
+  
+  if (length(zipName) != 0){
+    ## Download zip
+    zipUrl <- paste('http://www.gmensidesa.com/PANEL/P',
+                    pageId,
+                    '/',
+                    zipName,
+                    sep = ''
+    )
+    
+    download.file(url = zipUrl, destfile = here::here('output', zipName), mode = 'wb')
+    
+    ## Unzip
+    unzip(zipfile = here::here('output', zipName),
+          exdir = here::here('output', 'ensidesa')
+    )
+  }
+}
+
+```
+
+
+
+_______________________________________________________________________
+
+# Slope analysis
+
+
+## Import data from Locus
+
+```{r}
+# Unzip kmz into kml
+myKml <- unzip(zipfile = here::here('data', 'tracks', 'locus', 'Locus.kmz'),
+               exdir = here::here('data', 'tracks', 'out')
+)
+
+# Read kml into simple feature object
+trackList <- lapply(sf::st_layers(myKml)$name,
+                    function(x){
+                      sf::st_read(dsn = myKml, layer = x)
+                    }
+)
+
+# Retrieve track names
+trackNames <- lapply(trackList, 
+                     function(x){
+                       x[[1]][1] %>% as.character() %>% 
+                         return()
+                     }
+)
+
+# Reatain only coordinate/elevation tables
+trackList <- lapply(trackList,
+                    function(x){
+                      x$geometry[[1]][[1]] %>% 
+                        return()
+                    }
+)
+
+# Apply names to list elementes
+names(trackList) <- trackNames
+
+# Save
+saveRDS(trackList, here::here('output', 'locus.rds'))
+```
+
+
+## Add distance
+
+```{r}
+# Load track list
+trackList <- readRDS(here::here('output', 'locus.rds'))
+
+# Retain those elements with lonlat information
+trackList <- trackList[lengths(trackList) > 1]
+
+trackList <- lapply(trackList, function(x){
+  x <- as.data.frame(x) %>% 
+    setNames(c('lon', 'lat','altitude'))
+  x[1, 'gain'] <- 0
+  x[2:nrow(x), 'gain'] <- x[2:nrow(x), 'altitude'] - x[1:(nrow(x)-1), 'altitude']
+  x[1, 'distance'] <- 0
+  for (rowId in 2:nrow(x)){
+    x[rowId, 'distance'] <- geosphere::distm(x[rowId, c('lon', 'lat')], x[rowId-1, c('lon', 'lat')])
+  }
+  x %<>% dplyr::mutate(slope = gain / distance)
+  x[1, 'slope'] <- 0
+  
+  return(x)
+})
+
+# Save
+saveRDS(trackList, here::here('output', 'locus_slope.rds'))
+
+```
+
+
+```{r}
+library(myPlotTools)
+trackList <- readRDS(here::here('output', 'locus_slope.rds'))
+
+# Filter tracks: get indices
+selectedTracks <- c('Pedroso', 'Rueda', 'Pierzu', 'Pienzu', 'Mazuco', 'Ubiña', 'Hoya')
+
+idx <- sapply(selectedTracks, function(x) grepl(x, names(trackList))) %>% 
+  rowSums() %>% 
+  as.logical()
+
+# Build table
+trackTable <- Map(cbind, trackList[idx], trackName = names(trackList)[idx])
+trackTable <- lapply(trackTable, function(x) {x$trackName <- as.character(x$trackName); return(x)})
+trackTable %<>% dplyr::bind_rows() %>% 
+  dplyr::select(slope, trackName) %>% 
+  dplyr::filter(slope > 0) %>% 
+  dplyr::mutate(slope = atan(slope)*180/pi)
+
+# Plot
+data.frame(xAxis = trackTable$trackName, yAxis = trackTable$slope) %>%
+  list(boxplot = .) %>%
+  PlotFigure(scale.fill.palette = 'white', go.rotate = T, yLabel = 'slope (deg)')
+
+
+```
+
+
+# Track analysis
+
+
+
+```{r}
+
+containerFolder <- 'luna'
+
+# List the kmz files in a given folder path
+kmzFileNames <- list.files(here::here('data', 'tracks', containerFolder), pattern = '*.kmz', full.names = FALSE)
+
+# Unzip each KMZ file 
+trackList <- lapply(kmzFileNames, 
+                    function(x) 
+                      maptools::getKMLcoordinates(kmlfile = unzip(zipfile = paste0(here::here('data', 'tracks', containerFolder), '/', x),
+                                                                  exdir = here::here('data', 'tracks', 'out')
+                      ), 
+                      ignoreAltitude = FALSE)
+)
+
+# If more than one track was found unbundled in the folder, flatten the list
+if (length(trackList) > 1){
+  trackList <- unlist(trackList, recursive = FALSE)
+  ## Remove odd elements (useless information)
+  trackList <- lapply(trackList, function(x) {if (nrow(x) == 1) {NULL} else {x}})
+  trackList[sapply(trackList, is.null)] <- NULL
+} else {
+  trackList <- unlist(trackList, recursive = FALSE)
+  ## Remove odd elements (useless information)
+  # trackList <- trackList[[1]][seq(2, length(trackList[[1]]), 2)]
+  trackList <- lapply(trackList, function(x) {if (nrow(x) == 1) {NULL} else {x}})
+  trackList[sapply(trackList, is.null)] <- NULL
+}
+
+# Format list elements
+trackList <- lapply(trackList, function(x) {
+  x <- list(table = data.frame(lon = x[, 1], lat = x[, 2]),
+            elevation = x[, 3]
+  )
+})
+
+## Calculate bbox and show
+boundingBox <- DefineBoundingBox(trackList = trackList, zoomLevel = 1.1)
+
+ShowOSM(boundingBox, graticuleInterval = 0.1, trackList = trackList)
+```
+
+
+```{r}
+myHome <- list(lat = 43.531275, lon = -5.6519543)
+myDestination <- list(lat = 43.027526, lon = -5.918700)
+
+mapsapi::mp_directions(
+  origin = c(myHome$lat, myHome$lon),
+  destination = c(myDestination$lat, myDestination$lon),
+  alternatives = TRUE
+) %>% 
+  mapsapi::mp_get_routes()
+
+
+```
 

@@ -61,27 +61,33 @@ From Google Earth, first export as `.kmz` to the folder `'data/tracks/'` the fol
 
 ```{r}
 
-containerFolder <- 'luna'
+containerFolder <- 'sanIsidro'
 
 # List the kmz files in a given folder path
 kmzFileNames <- list.files(here::here('data', 'tracks', containerFolder), pattern = '*.kmz', full.names = FALSE)
 
 # Unzip each KMZ file 
 trackList <- lapply(kmzFileNames, 
-                 function(x) 
-                   maptools::getKMLcoordinates(kmlfile = unzip(zipfile = paste0(here::here('data', 'tracks', containerFolder), '/', x),
-                                                               exdir   = here::here('data', 'tracks', 'out')
-                   ), 
-                   ignoreAltitude = FALSE)
+                    function(x) 
+                      maptools::getKMLcoordinates(kmlfile = unzip(zipfile = paste0(here::here('data', 'tracks', containerFolder), '/', x),
+                                                                  exdir = here::here('data', 'tracks', 'out')
+                      ), 
+                      ignoreAltitude = FALSE)
 )
 
 # If more than one track was found unbundled in the folder, flatten the list
 if (length(trackList) > 1){
   trackList <- unlist(trackList, recursive = FALSE)
+  ## Remove odd elements (useless information)
+  trackList <- lapply(trackList, function(x) {if (nrow(x) == 1) {NULL} else {x}})
+  trackList[sapply(trackList, is.null)] <- NULL
+} else {
+  trackList <- unlist(trackList, recursive = FALSE)
+  ## Remove odd elements (useless information)
+  # trackList <- trackList[[1]][seq(2, length(trackList[[1]]), 2)]
+  trackList <- lapply(trackList, function(x) {if (nrow(x) == 1) {NULL} else {x}})
+  trackList[sapply(trackList, is.null)] <- NULL
 }
-
-# Remove odd elements (useless information)
-trackList <- trackList[[1]][seq(2, length(trackList[[1]]), 2)]
 
 # Format list elements
 trackList <- lapply(trackList, function(x) {
@@ -97,13 +103,25 @@ ShowOSM(boundingBox, graticuleInterval = 0.1, trackList = trackList)
 ```
 
 
+# Manually define the bounding box
+
+```{r}
+rm(boundingBox)
+
+SelectMapArea()
+
+ShowOSM(boundingBox, graticuleInterval = 0.1)
+```
+
+
 # Get tiles from IGN
+
+## Download
 
 ```{r, results='asis'}
 # Obtain tile codes
-tileSet <- FindIGNTiles(boundingBox = boundingBox)
-
-print(tileSet)
+tileSet <- FindIGNTiles(boundingBox = boundingBox) %T>% 
+  print()
 
 # Import data into raster objects
 rasterObject <- ImportIGNTiles(tileSet, 
@@ -119,13 +137,14 @@ saveRDS(rasterObject, here::here('data', 'tracks', containerFolder, 'rasterObjec
 
 ```
 
-# Investigate proposed track
+# Pick points of track
 
 ```{r, eval=F}
 go.usePreviousTrack = FALSE
 
 # Load raster object
 rasterObject <- readRDS(here::here('data', 'tracks', containerFolder, 'rasterObject.rds'))
+plot(rasterObject)
 
 # Launch shiny app
 if (!go.usePreviousTrack){
@@ -133,7 +152,7 @@ if (!go.usePreviousTrack){
   rm(proposedTrack)
 }
 
-AssesTrackOnMap(trackList = trackList, rasterObject = rasterObject, boundingBox = boundingBox)
+AssesTrackOnMap(trackList = if (exists('trackList')) {trackList} else {NULL})
 
 # Show result
 ShowOSM(boundingBox, graticuleInterval = 1, trackList = proposedTrack)
@@ -143,7 +162,7 @@ ShowOSM(boundingBox, graticuleInterval = 1, trackList = proposedTrack)
 # Export data frame as kml
 
 ```{r}
-trackName <- 'Gradura_01.kml'
+trackName <- 'Obiu.kml'
 
 proposedTrack %>% 
   dplyr::select(lon, lat) %>% 
@@ -155,6 +174,7 @@ proposedTrack %>%
 export_kml(t_id = 'id')
 ```
 
+<<<<<<< HEAD
 
 # Add computed track to the wikiloc list
 
@@ -164,3 +184,5 @@ trackList <- AddTrackToList(trackTable = pointTable, trackList = trackList)
 ```
 
 
+=======
+>>>>>>> feature_1
