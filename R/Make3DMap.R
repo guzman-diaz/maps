@@ -121,5 +121,5 @@ Make3DMap <- function(go_boundBox = FALSE,
   
   
   # Output
-  invisible(list(tif_matrix, ele_matrix))
+  invisible(list(tif_matrix = tif_matrix, ele_matrix = ele_matrix))
 }
