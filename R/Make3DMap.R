@@ -1,5 +1,5 @@
 Make3DMap <- function(go_boundBox = FALSE,
-                      go_mask_elevation = TRUE,
+                      go_mask_elevation = FALSE,
                       go_mask_tif = FALSE,
                       tif_folder = '\\\\pocpaco\\maps\\overlays\\',
                       tif_name = 'Asturias_1980_georef.tif',
@@ -68,21 +68,21 @@ Make3DMap <- function(go_boundBox = FALSE,
   ## Transform:
     
   ### Transform each band to array
-  tif_matrix_1 <- rayshader::raster_to_matrix(tif_raster[[1]])
-  tif_matrix_2 <- rayshader::raster_to_matrix(tif_raster[[2]])
-  tif_matrix_3 <- rayshader::raster_to_matrix(tif_raster[[3]])
+  tif_tensor_1 <- rayshader::raster_to_matrix(tif_raster[[1]])
+  tif_tensor_2 <- rayshader::raster_to_matrix(tif_raster[[2]])
+  tif_tensor_3 <- rayshader::raster_to_matrix(tif_raster[[3]])
   
   ### Merge band arrays into one tensor:
   #### Initialize
-  tif_matrix <- array(0, dim = c(nrow(tif_matrix_1), ncol(tif_matrix_1), 3))
+  tif_tensor <- array(0, dim = c(nrow(tif_tensor_1), ncol(tif_tensor_1), 3))
   
   #### Merge
-  tif_matrix[, , 1] <- tif_matrix_1/255 
-  tif_matrix[, , 2] <- tif_matrix_2/255 
-  tif_matrix[, , 3] <- tif_matrix_3/255
+  tif_tensor[, , 1] <- tif_tensor_1/255 
+  tif_tensor[, , 2] <- tif_tensor_2/255 
+  tif_tensor[, , 3] <- tif_tensor_3/255
   
   #### Transpose to abide by the elevation raster orientation
-  tif_matrix <- aperm(tif_matrix, c(2, 1, 3))
+  tif_tensor <- aperm(tif_tensor, c(2, 1, 3))
 
   
   # Elevation raster
@@ -116,10 +116,10 @@ Make3DMap <- function(go_boundBox = FALSE,
   
   
   # Plot
-  plot_3d(tif_matrix, ele_matrix, windowsize = c(1100,900), zscale = 50, shadowdepth = -50,
+  plot_3d(tif_tensor, ele_matrix, windowsize = c(1100,900), zscale = 50, shadowdepth = -50,
           zoom=0.5, phi=45,theta=-45,fov=70, background = "#F2E1D0", shadowcolor = "#523E2B")
   
   
   # Output
-  invisible(list(tif_matrix = tif_matrix, ele_matrix = ele_matrix))
+  invisible(list(tif_tensor = tif_tensor, ele_matrix = ele_matrix))
 }
