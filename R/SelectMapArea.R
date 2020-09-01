@@ -1,6 +1,6 @@
 SelectMapArea <- function(boundingBox = NULL,
                           graticuleInterval = 0.1,
-                          environment
+                          environment = .GlobalEnv
 ){
   
   if (is.null(boundingBox)){
