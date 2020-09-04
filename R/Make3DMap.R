@@ -101,24 +101,6 @@ Make3DMap <- function(go_boundBox = FALSE,
       raster::plotRGB(tif_raster)
     }
     
-    ## Transform:
-    
-    ### Transform each band to array
-    tif_tensor_1 <- rayshader::raster_to_matrix(tif_raster[[1]])
-    tif_tensor_2 <- rayshader::raster_to_matrix(tif_raster[[2]])
-    tif_tensor_3 <- rayshader::raster_to_matrix(tif_raster[[3]])
-    
-    ### Merge band arrays into one tensor:
-    #### Initialize
-    tif_tensor <- array(0, dim = c(nrow(tif_tensor_1), ncol(tif_tensor_1), 3))
-    
-    #### Merge
-    tif_tensor[, , 1] <- tif_tensor_1/255 
-    tif_tensor[, , 2] <- tif_tensor_2/255 
-    tif_tensor[, , 3] <- tif_tensor_3/255
-    
-    #### Transpose to abide by the elevation raster orientation
-    tif_tensor <- aperm(tif_tensor, c(2, 1, 3))
   } else {
 
     mapObject <- OpenStreetMap::openmap(upperLeft = c(lat = boundingBox$p2$lat, lon = boundingBox$p1$lon),
@@ -128,16 +110,31 @@ Make3DMap <- function(go_boundBox = FALSE,
                                         mergeTiles = TRUE
     )
     
-    ## Fetch overlay image
-    png(filename = here::here('tmp', 'overlay.png'), 
-        width = mapObject$tiles[[1]]$xres, 
-        height = mapObject$tiles[[1]]$yres
-    )
-    plot(mapObject)
-    dev.off()
-    
-
+    ## Georeference the tif raster according to the elevation raster
+    tif_raster <- raster::raster(mapObject)
+    crs(tif_raster) <- crs(ele_raster)
+    extent(tif_raster) <- unlist(extent(ele_raster))
   }
+  
+  ## Transform:
+  
+  ### Transform each band to array
+  tif_tensor_1 <- rayshader::raster_to_matrix(tif_raster[[1]])
+  tif_tensor_2 <- rayshader::raster_to_matrix(tif_raster[[2]])
+  tif_tensor_3 <- rayshader::raster_to_matrix(tif_raster[[3]])
+  
+  ### Merge band arrays into one tensor:
+  #### Initialize
+  tif_tensor <- array(0, dim = c(nrow(tif_tensor_1), ncol(tif_tensor_1), 3))
+  
+  #### Merge
+  tif_tensor[, , 1] <- tif_tensor_1/255 
+  tif_tensor[, , 2] <- tif_tensor_2/255 
+  tif_tensor[, , 3] <- tif_tensor_3/255
+  
+  #### Transpose to abide by the elevation raster orientation
+  tif_tensor <- aperm(tif_tensor, c(2, 1, 3))
+  
   
   
   
