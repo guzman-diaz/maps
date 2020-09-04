@@ -5,7 +5,8 @@ Make3DMap <- function(go_boundBox = FALSE,
                       tif_name = 'Asturias_1980_georef.tif',
                       shape_folder = '\\\\pocpaco\\maps\\shapes\\',
                       shape_name = 'shape_Asturias.rds',
-                      go_plot_tif = TRUE
+                      go_plot_tif = TRUE,
+                      go_downloadMap = TRUE
                       
 ){
   # Preliminaries
@@ -34,56 +35,7 @@ Make3DMap <- function(go_boundBox = FALSE,
   }
   
   
-  # Process TIF
   
-  ## Load TIF
-  tif_raster <- raster::stack(paste(tif_folder, tif_name, sep = '\\'))
-
-  cat(sprintf(' TIF name: %s\n', tif_name))
-  cat(sprintf(' TIF no. layers: %d\n ', nlayers(tif_raster)))
-  cat(sprintf('TIF CRS: %s\n', raster::crs(tif_raster)))
-
-  ## Mask using shape
-  if (go_mask_tif){
-    mapShape <- readRDS(paste0(shape_folder, shape_name)) %>% 
-      sp::spTransform(CRSobj = crs(tif_raster))
-    
-    tif_raster <- tif_raster %>% 
-      raster::crop(extent(mapShape)) %>% 
-      raster::mask(mapShape)
-  }
-  
-  ## Crop to bounding box
-  if (go_boundBox){
-    tif_raster <- tif_raster %>% 
-      raster::crop(c(boundingBox$p1$x, boundingBox$p2$x, boundingBox$p1$y, boundingBox$p2$y))
-  }
-  
-  ## Plot
-  if (go_plot_tif){
-    raster::plotRGB(tif_raster)
-  }
-  
-  
-  ## Transform:
-    
-  ### Transform each band to array
-  tif_tensor_1 <- rayshader::raster_to_matrix(tif_raster[[1]])
-  tif_tensor_2 <- rayshader::raster_to_matrix(tif_raster[[2]])
-  tif_tensor_3 <- rayshader::raster_to_matrix(tif_raster[[3]])
-  
-  ### Merge band arrays into one tensor:
-  #### Initialize
-  tif_tensor <- array(0, dim = c(nrow(tif_tensor_1), ncol(tif_tensor_1), 3))
-  
-  #### Merge
-  tif_tensor[, , 1] <- tif_tensor_1/255 
-  tif_tensor[, , 2] <- tif_tensor_2/255 
-  tif_tensor[, , 3] <- tif_tensor_3/255
-  
-  #### Transpose to abide by the elevation raster orientation
-  tif_tensor <- aperm(tif_tensor, c(2, 1, 3))
-
   
   # Elevation raster
   
@@ -113,6 +65,82 @@ Make3DMap <- function(go_boundBox = FALSE,
 
   ## Remove NAs (ocean)
   ele_matrix[is.na(ele_matrix)] <- 0
+  
+  
+  
+  
+  # Process TIF
+  
+  ## Load TIF
+  
+  if (!go_downloadMap){
+    tif_raster <- raster::stack(paste(tif_folder, tif_name, sep = '\\'))
+    
+    cat(sprintf(' TIF name: %s\n', tif_name))
+    cat(sprintf(' TIF no. layers: %d\n ', nlayers(tif_raster)))
+    cat(sprintf('TIF CRS: %s\n', raster::crs(tif_raster)))
+    
+    ## Mask using shape
+    if (go_mask_tif){
+      mapShape <- readRDS(paste0(shape_folder, shape_name)) %>% 
+        sp::spTransform(CRSobj = crs(tif_raster))
+      
+      tif_raster <- tif_raster %>% 
+        raster::crop(extent(mapShape)) %>% 
+        raster::mask(mapShape)
+    }
+    
+    ## Crop to bounding box
+    if (go_boundBox){
+      tif_raster <- tif_raster %>% 
+        raster::crop(c(boundingBox$p1$x, boundingBox$p2$x, boundingBox$p1$y, boundingBox$p2$y))
+    }
+    
+    ## Plot
+    if (go_plot_tif){
+      raster::plotRGB(tif_raster)
+    }
+    
+    ## Transform:
+    
+    ### Transform each band to array
+    tif_tensor_1 <- rayshader::raster_to_matrix(tif_raster[[1]])
+    tif_tensor_2 <- rayshader::raster_to_matrix(tif_raster[[2]])
+    tif_tensor_3 <- rayshader::raster_to_matrix(tif_raster[[3]])
+    
+    ### Merge band arrays into one tensor:
+    #### Initialize
+    tif_tensor <- array(0, dim = c(nrow(tif_tensor_1), ncol(tif_tensor_1), 3))
+    
+    #### Merge
+    tif_tensor[, , 1] <- tif_tensor_1/255 
+    tif_tensor[, , 2] <- tif_tensor_2/255 
+    tif_tensor[, , 3] <- tif_tensor_3/255
+    
+    #### Transpose to abide by the elevation raster orientation
+    tif_tensor <- aperm(tif_tensor, c(2, 1, 3))
+  } else {
+
+    mapObject <- OpenStreetMap::openmap(upperLeft = c(lat = boundingBox$p2$lat, lon = boundingBox$p1$lon),
+                                        lowerRight = c(lat = boundingBox$p1$lat, lon = boundingBox$p2$lon),
+                                        zoom = NULL,
+                                        type = 'osm',
+                                        mergeTiles = TRUE
+    )
+    
+    ## Fetch overlay image
+    png(filename = here::here('tmp', 'overlay.png'), 
+        width = mapObject$tiles[[1]]$xres, 
+        height = mapObject$tiles[[1]]$yres
+    )
+    plot(mapObject)
+    dev.off()
+    
+
+  }
+  
+  
+  
   
   
   # Plot
