@@ -6,8 +6,8 @@ Make3DMap <- function(go_boundBox = FALSE,
                       shape_folder = '\\\\pocpaco\\maps\\shapes\\',
                       shape_name = 'shape_Asturias.rds',
                       go_plot_tif = TRUE,
-                      go_downloadMap = TRUE
-                      
+                      go_downloadMap = TRUE,
+                      osmId = 1
 ){
   # Preliminaries
   
@@ -21,6 +21,9 @@ Make3DMap <- function(go_boundBox = FALSE,
   pacman::p_load(geosphere)
   pacman::p_load(scales)
   
+  osmType_lst <- list()
+  osmType_lst[[1]] <- 'https://tile.opentopomap.org/{z}/{x}/{y}.png?apikey=a5e1db75d71d42d8a0c9acf915b1d63b'
+  osmType_lst[[2]] <- 'https://tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png?apikey=a5e1db75d71d42d8a0c9acf915b1d63b'
 
   # Define cropped area manually
   if (go_boundBox){
@@ -33,8 +36,6 @@ Make3DMap <- function(go_boundBox = FALSE,
     
     ShowOSM(boundingBox, graticuleInterval = 0.1)
   }
-  
-  
   
   
   # Elevation raster
@@ -106,7 +107,7 @@ Make3DMap <- function(go_boundBox = FALSE,
     mapObject <- OpenStreetMap::openmap(upperLeft = c(lat = boundingBox$p2$lat, lon = boundingBox$p1$lon),
                                         lowerRight = c(lat = boundingBox$p1$lat, lon = boundingBox$p2$lon),
                                         zoom = NULL,
-                                        type = 'osm',
+                                        type = osmType_lst[[osmId]],
                                         mergeTiles = TRUE
     )
     
