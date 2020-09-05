@@ -23,11 +23,18 @@ Make3DMap <- function(go_boundBox = TRUE,
   pacman::p_load(geosphere)
   pacman::p_load(scales)
   
-  ## Define OSM urls
+  ## Define OSM urls: http://leaflet-extras.github.io/leaflet-providers/preview/
   osmType_lst <- list()
-  osmType_lst[[1]] <- 'https://tile.opentopomap.org/{z}/{x}/{y}.png?apikey=a5e1db75d71d42d8a0c9acf915b1d63b'
-  osmType_lst[[2]] <- 'https://tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png?apikey=a5e1db75d71d42d8a0c9acf915b1d63b'
-
+  osmType_lst[[1]] <- 'https://tile.openstreetmap.fr/osmfr/{z}/{x}/{y}.png?apikey=a5e1db75d71d42d8a0c9acf915b1d63b'
+  osmType_lst[[2]] <- 'https://tile.opentopomap.org/{z}/{x}/{y}.png?apikey=a5e1db75d71d42d8a0c9acf915b1d63b'
+  osmType_lst[[3]] <- 'https://tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png?apikey=a5e1db75d71d42d8a0c9acf915b1d63b'
+  osmType_lst[[4]] <- 'https://tile.thunderforest.com/transport-dark/{z}/{x}/{y}.png?apikey=a5e1db75d71d42d8a0c9acf915b1d63b'
+  osmType_lst[[5]] <- 'https://tile.thunderforest.com/landscape/{z}/{x}/{y}.png?apikey=a5e1db75d71d42d8a0c9acf915b1d63b'
+  osmType_lst[[6]] <- 'https://tile.thunderforest.com/outdoors/{z}/{x}/{y}.png?apikey=a5e1db75d71d42d8a0c9acf915b1d63b'
+  osmType_lst[[7]] <- 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}?apikey=a5e1db75d71d42d8a0c9acf915b1d63b'
+  osmType_lst[[8]] <- 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}?apikey=a5e1db75d71d42d8a0c9acf915b1d63b'
+  osmType_lst[[9]] <- 'https://tiles.wmflabs.org/hikebike/{z}/{x}/{y}.png'
+  
   
   # Define cropped area manually
   
