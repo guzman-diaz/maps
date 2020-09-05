@@ -1,16 +1,18 @@
-Make3DMap <- function(go_boundBox = FALSE,
+Make3DMap <- function(go_boundBox = TRUE,
+                      osmType_id = NULL,
                       go_mask_elevation = FALSE,
                       go_mask_tif = FALSE,
+                      go_plot_tif = FALSE,
                       tif_folder = '\\\\pocpaco\\maps\\overlays\\',
                       tif_name = 'Asturias_1980_georef.tif',
                       shape_folder = '\\\\pocpaco\\maps\\shapes\\',
-                      shape_name = 'shape_Asturias.rds',
-                      go_plot_tif = TRUE,
-                      go_downloadMap = TRUE,
-                      osmId = 1
+                      shape_name = 'shape_Asturias.rds'
 ){
+  
+  
   # Preliminaries
   
+  ## Load libraries
   pacman::p_load(rayshader)
   pacman::p_load(rgdal)
   pacman::p_load(proj4)
@@ -21,11 +23,14 @@ Make3DMap <- function(go_boundBox = FALSE,
   pacman::p_load(geosphere)
   pacman::p_load(scales)
   
+  ## Define OSM urls
   osmType_lst <- list()
   osmType_lst[[1]] <- 'https://tile.opentopomap.org/{z}/{x}/{y}.png?apikey=a5e1db75d71d42d8a0c9acf915b1d63b'
   osmType_lst[[2]] <- 'https://tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png?apikey=a5e1db75d71d42d8a0c9acf915b1d63b'
 
+  
   # Define cropped area manually
+  
   if (go_boundBox){
     source(here::here('R', 'SelectMapArea.R'))
     source(here::here('R', 'ShowOSM.R'))
@@ -68,13 +73,11 @@ Make3DMap <- function(go_boundBox = FALSE,
   ele_matrix[is.na(ele_matrix)] <- 0
   
   
-  
-  
   # Process TIF
   
   ## Load TIF
   
-  if (!go_downloadMap){
+  if (is.null(osmType_id)){
     tif_raster <- raster::stack(paste(tif_folder, tif_name, sep = '\\'))
     
     cat(sprintf(' TIF name: %s\n', tif_name))
@@ -107,7 +110,7 @@ Make3DMap <- function(go_boundBox = FALSE,
     mapObject <- OpenStreetMap::openmap(upperLeft = c(lat = boundingBox$p2$lat, lon = boundingBox$p1$lon),
                                         lowerRight = c(lat = boundingBox$p1$lat, lon = boundingBox$p2$lon),
                                         zoom = NULL,
-                                        type = osmType_lst[[osmId]],
+                                        type = osmType_lst[[osmType_id]],
                                         mergeTiles = TRUE
     )
     
@@ -135,11 +138,7 @@ Make3DMap <- function(go_boundBox = FALSE,
   
   #### Transpose to abide by the elevation raster orientation
   tif_tensor <- aperm(tif_tensor, c(2, 1, 3))
-  
-  
-  
-  
-  
+
   
   # Plot
   plot_3d(tif_tensor, ele_matrix, windowsize = c(1100,900), zscale = 50, shadowdepth = -50,
