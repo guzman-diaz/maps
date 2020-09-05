@@ -148,10 +148,9 @@ Make3DMap <- function(go_boundBox = TRUE,
 
   
   # Plot
-  plot_3d(tif_tensor, ele_matrix - max(ele_matrix), 
+  plot_3d(tif_tensor, ele_matrix, 
           windowsize = c(1100,900), 
           zscale = 50, zoom = 0.65, 
-          shadowdepth = -50,
           phi = 45, theta = -45, fov=30, 
           background = "#F2E1D0", shadowcolor = "#523E2B"
   )  
