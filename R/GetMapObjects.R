@@ -12,6 +12,8 @@ GetMapObjects <- function(go_boundBox = TRUE,
                           shape_name = 'shape_Asturias.rds'
 ){
   
+
+  # ============================================================================
   # Preliminaries
   
   ## Load libraries
@@ -157,7 +159,7 @@ GetMapObjects <- function(go_boundBox = TRUE,
     }
     
     ## Crop to bounding box
-    if (is.null(boundinBox)){
+    if (is.null(boundingBox)){
       tif_raster <- tif_raster %>% 
         raster::crop(c(boundingBox$p1$x, boundingBox$p2$x, boundingBox$p1$y, boundingBox$p2$y))
     }
@@ -180,4 +182,12 @@ GetMapObjects <- function(go_boundBox = TRUE,
   ## Plot
   plotRGB(tif_raster)
   
+  
+  # ============================================================================
+  # Output
+  return(list(
+    track_lst = ifelse(exists('track_lst'), track_lst, NA),
+    ele_raster = ele_raster,
+    tif_raster = tif_raster
+  ))
 }
