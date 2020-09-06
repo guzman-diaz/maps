@@ -5,7 +5,9 @@ GetMapObjects <- function(go_boundBox = TRUE,
                           ele_folder = here::here('data'),
                           ele_file = 'rasterObject_Asturias.rds',
                           track_folder = here::here('data', 'tracks', 'hibeo'),
-                          track_file = '*' # NULL if no track is employed
+                          track_file = '*', # NULL if no track is employed
+                          shape_folder = '\\\\pocpaco\\maps\\shapes\\',
+                          shape_name = 'shape_Asturias.rds'
 ){
   
   # Preliminaries
@@ -97,7 +99,8 @@ GetMapObjects <- function(go_boundBox = TRUE,
 
   
   # ============================================================================
-  # Bounding box
+  # Re-define bounding box
+  
   if (!exists('boundingBox')){
     boundingBox <- NULL
   }
@@ -114,6 +117,19 @@ GetMapObjects <- function(go_boundBox = TRUE,
   
   ## Load
   ele_raster <- readRDS(file.path(ele_folder, ele_file))
-  cat(sprintf('Elevation raster %s with CRS: %s\n', ele_file, raster::crs(ele_raster)))
+  cat(sprintf('Elevation raster %s with CRS: \n %s\n', ele_file, raster::crs(ele_raster)))
+  
+  ## Mask if requested
+  if (go_mask_elevation){
+    mapShape <- readRDS(paste0(shape_folder, shape_name)) %>% 
+      ### Assign CRS to the elevation raster CRS
+      sp::spTransform(CRSobj = crs(ele_raster))
+    
+    ele_raster <- ele_raster %>% 
+      raster::crop(extent(mapShape)) %>% 
+      raster::mask(mapShape) %>% 
+      raster::crop(with(boundingBox, c(p1$x, p2$x, p1$y, p2$y)))
+  }
+  
   
 }
