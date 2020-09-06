@@ -3,7 +3,7 @@ GetMapObjects <- function(go_boundBox = TRUE,
                           go_mask_elevation = FALSE,
                           go_mask_tif = FALSE,
                           ele_folder = here::here('data'),
-                          ele_raster = 'rasterObject_Asturias.rds',
+                          ele_file = 'rasterObject_Asturias.rds',
                           track_folder = here::here('data', 'tracks', 'hibeo'),
                           track_file = '*' # NULL if no track is employed
 ){
@@ -113,7 +113,7 @@ GetMapObjects <- function(go_boundBox = TRUE,
   # Elevation raster
   
   ## Load
-  ele_raster <- readRDS(file.path(ele_folder, ele_raster))
-  cat(sprintf('Elevation CRS: %s\n', raster::crs(ele_raster)))
+  ele_raster <- readRDS(file.path(ele_folder, ele_file))
+  cat(sprintf('Elevation raster %s with CRS: %s\n', ele_file, raster::crs(ele_raster)))
   
 }
