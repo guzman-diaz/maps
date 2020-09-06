@@ -6,6 +6,8 @@ GetMapObjects <- function(go_boundBox = TRUE,
                           ele_file = 'rasterObject_Asturias.rds',
                           track_folder = here::here('data', 'tracks', 'hibeo'),
                           track_file = '*', # NULL if no track is employed
+                          tif_folder = '\\\\pocpaco\\maps\\overlays\\',
+                          tif_name = 'Asturias_1980_georef.tif',
                           shape_folder = '\\\\pocpaco\\maps\\shapes\\',
                           shape_name = 'shape_Asturias.rds'
 ){
@@ -131,5 +133,51 @@ GetMapObjects <- function(go_boundBox = TRUE,
       raster::crop(with(boundingBox, c(p1$x, p2$x, p1$y, p2$y)))
   }
   
+  
+  # ============================================================================
+  # TIF raster
+  
+  if (is.null(osmType_id)){
+    
+    ## Load a georeferenced TIF from disk
+    tif_raster <- raster::stack(file.path(tif_folder, tif_name))
+    
+    cat(sprintf(' TIF name: %s\n', tif_name))
+    cat(sprintf(' TIF no. layers: %d\n ', nlayers(tif_raster)))
+    cat(sprintf('TIF CRS: %s\n', raster::crs(tif_raster)))
+    
+    ## Mask using shape
+    if (go_mask_tif){
+      mapShape <- readRDS(paste0(shape_folder, shape_name)) %>% 
+        sp::spTransform(CRSobj = crs(tif_raster))
+      
+      tif_raster <- tif_raster %>% 
+        raster::crop(extent(mapShape)) %>% 
+        raster::mask(mapShape)
+    }
+    
+    ## Crop to bounding box
+    if (is.null(boundinBox)){
+      tif_raster <- tif_raster %>% 
+        raster::crop(c(boundingBox$p1$x, boundingBox$p2$x, boundingBox$p1$y, boundingBox$p2$y))
+    }
+    
+  } else {
+    ## Load map from OSM
+    mapObject <- OpenStreetMap::openmap(upperLeft = c(lat = boundingBox$p2$lat, lon = boundingBox$p1$lon),
+                                        lowerRight = c(lat = boundingBox$p1$lat, lon = boundingBox$p2$lon),
+                                        zoom = NULL,
+                                        type = osmType_lst[[osmType_id]],
+                                        mergeTiles = TRUE
+    )
+    
+    ## Georeference the tif raster according to the elevation raster
+    tif_raster <- raster::raster(mapObject)
+    crs(tif_raster) <- crs(ele_raster)
+    extent(tif_raster) <- unlist(extent(ele_raster))
+  }
+  
+  ## Plot
+  plotRGB(tif_raster)
   
 }
