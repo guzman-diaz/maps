@@ -121,6 +121,11 @@ GetMapObjects <- function(go_boundBox = TRUE,
   
   ## Load
   ele_raster <- readRDS(file.path(ele_folder, ele_file))
+  
+  if (!is.null(boundingBox)){
+    ele_raster <- raster::crop(ele_raster, with(boundingBox, c(p1$x, p2$x, p1$y, p2$y)))
+  }
+  
   cat(sprintf('Elevation raster %s with CRS: \n %s\n', ele_file, raster::crs(ele_raster)))
   
   ## Mask if requested
