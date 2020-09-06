@@ -22,7 +22,7 @@ GetMapObjects <- function(go_boundBox = TRUE,
   pacman::p_load(scales)
   
   ## Source files
-  # source(here::here('R', 'SelectMapArea.R'))
+  source(here::here('R', 'SelectMapArea.R'))
   source(here::here('R', 'ShowOSM.R'))
   source(here::here('R', 'TransformCoordinates.R'))
   
@@ -39,7 +39,7 @@ GetMapObjects <- function(go_boundBox = TRUE,
   osmType_lst[[9]] <- 'https://tiles.wmflabs.org/hikebike/{z}/{x}/{y}.png'
   
   
-  ## ===========================================================================
+  # ============================================================================
   # Tracks
   
   if (!is.null(track_file)){
@@ -96,17 +96,20 @@ GetMapObjects <- function(go_boundBox = TRUE,
   
 
   
-  ## ===========================================================================
+  # ============================================================================
   # Bounding box
+  if (!exists('boundingBox')){
+    boundingBox <- NULL
+  }
   
   if (go_boundBox){
-    SelectMapArea(environment = environment())
+    SelectMapArea(environment = environment(), boundingBox = boundingBox)
     
     ShowOSM(boundingBox, graticuleInterval = 0.1)
   }
   
   
-  ## ===========================================================================
+  # ============================================================================
   # Elevation raster
   
   ## Load
