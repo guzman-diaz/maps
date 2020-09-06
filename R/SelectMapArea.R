@@ -4,7 +4,9 @@ SelectMapArea <- function(boundingBox = NULL,
 ){
   
   if (is.null(boundingBox)){
-    boundingBox <- DefineBoundingBox(p1 = c(lon = -5.75, lat = 43.45), p2 = c(lon = -5.55, lat = 43.6))
+    boundingBox <- list(p1 = as.list(c(lon = -5.75, lat = 43.45)), 
+                        p2 = as.list(c(lon = -5.55, lat = 43.60))
+    )
   }
   
   # Window properties
@@ -25,14 +27,14 @@ SelectMapArea <- function(boundingBox = NULL,
     
     ## Observe "Done" button events
     observeEvent(input$doneButton, {
-      boundingBox <- DefineBoundingBox(
-        p1 = c(lon = input$myMap_bounds$west,
-               lat = input$myMap_bounds$south
-        ),
-        p2 = c(lon = input$myMap_bounds$east,
-               lat = input$myMap_bounds$north
-        )
-      )
+      p1 <- c(lon = input$myMap_bounds$west, lat = input$myMap_bounds$south)
+      p2 <- c(lon = input$myMap_bounds$east, lat = input$myMap_bounds$north)
+
+      boundingBox <- list(p1 = as.list(p1), p2 = as.list(p2))
+      
+      boundingBox$p1 <- c(boundingBox$p1, TransformCoordinates(as.vector(boundingBox$p1), is.lonLat = T))
+      boundingBox$p2 <- c(boundingBox$p2, TransformCoordinates(as.vector(boundingBox$p2), is.lonLat = T))
+
       assign('boundingBox', boundingBox, envir = environment)
       stopApp()
     })
