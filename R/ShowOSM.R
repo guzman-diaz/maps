@@ -42,8 +42,8 @@ ShowOSM <- function(boundingBox,
     for (trackId in 1:length(trackList)){
       mapObject <- mapObject %>%
       addPolylines(map = .,
-                   lat = trackList[[trackId]]$table$lat, 
-                   lng = trackList[[trackId]]$table$lon,
+                   lat = trackList[[trackId]]$lat, 
+                   lng = trackList[[trackId]]$lon,
                    weight = 3, opacity = 1.0,
                    color = c('#e6194b', '#3cb44b', '#ffe119', '#4363d8', 
                              '#f58231', '#911eb4', '#46f0f0', '#f032e6', 
@@ -59,10 +59,10 @@ ShowOSM <- function(boundingBox,
   # Markers
   if (!is.null(trackList)){
     for (trackId in 1:length(trackList)){
-      markerLabels <- as.list(paste0(sprintf('%03d', trackId), '-', 1:nrow(trackList[[trackId]]$table)))
+      markerLabels <- as.list(paste0(sprintf('%03d', trackId), '-', 1:nrow(trackList[[trackId]])))
       mapObject <- mapObject %>% 
-        addCircleMarkers(lat = trackList[[trackId]]$table$lat, 
-                         lng = trackList[[trackId]]$table$lon,
+        addCircleMarkers(lat = trackList[[trackId]]$lat, 
+                         lng = trackList[[trackId]]$lon,
                          layerId = markerLabels,
                          label = markerLabels,
                          stroke = FALSE,fillOpacity = 0.8,

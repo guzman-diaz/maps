@@ -87,8 +87,7 @@ GetMapObjects <- function(go_boundBox = TRUE,
 
     ## Calculate bbox and show
     ### Bind all tables
-    lonlat_corners <- lapply(track_lst, function(x) {x <- x$table}) %>% 
-      dplyr::bind_rows() %>% 
+    lonlat_corners <- dplyr::bind_rows(track_lst) %>% 
       summarize(max.lon = max(lon), max.lat = max(lat), min.lon = min(lon), min.lat = min(lat))
     
     ### Define bbox
@@ -147,7 +146,9 @@ GetMapObjects <- function(go_boundBox = TRUE,
   ## If there is a track, get elevation from raster
   trackTable$elevation <- extract(rasterObject, TransformCoordinates(trackTable, is.lonLat = T))
   
-  
+  track_lst <- lapply(track_lst, 
+                      function(x) x$elevation <- raster::extract(ele_raster, TransformCoordinates(, x[c('lon', 'lat')], is.lonLat = T))
+  )
   
   # ============================================================================
   # TIF raster
