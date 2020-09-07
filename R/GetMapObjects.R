@@ -101,6 +101,8 @@ GetMapObjects <- function(go_boundBox = TRUE,
     
     ### Show result
     ShowOSM(boundingBox, graticuleInterval = 0.1, trackList = track_lst)
+  } else {
+    track_lst <- NA
   }
   
 
@@ -143,11 +145,12 @@ GetMapObjects <- function(go_boundBox = TRUE,
       raster::crop(with(boundingBox, c(p1$x, p2$x, p1$y, p2$y)))
   }
   
-  ## If there is a track, get elevation from raster
-  trackTable$elevation <- extract(rasterObject, TransformCoordinates(trackTable, is.lonLat = T))
-  
+  ## If there is a track, recalculate elevation from raster
   track_lst <- lapply(track_lst, 
-                      function(x) x$elevation <- raster::extract(ele_raster, TransformCoordinates(, x[c('lon', 'lat')], is.lonLat = T))
+                      function(x){
+                        x$elevation <- raster::extract(ele_raster, TransformCoordinates(x[c('lon', 'lat')], is.lonLat = T))
+                        return(x)
+                      }
   )
   
   # ============================================================================
@@ -200,7 +203,7 @@ GetMapObjects <- function(go_boundBox = TRUE,
   # ============================================================================
   # Output
   return(list(
-    track_lst = ifelse(exists('track_lst'), track_lst, NA),
+    track_lst = track_lst,
     ele_raster = ele_raster,
     tif_raster = tif_raster
   ))
