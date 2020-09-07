@@ -76,11 +76,15 @@ GetMapObjects <- function(go_boundBox = TRUE,
       track_lst[sapply(track_lst, is.null)] <- NULL
     }
     
-    # Format list elements
-    track_lst <- lapply(track_lst, function(x) {
-      x <- list(table = data.frame(lon = x[, 1], lat = x[, 2], elevation = x[, 3]))
-    })
-    
+    ## Convert elements to data frames and name them
+    track_lst <- lapply(track_lst,
+                        function(x){
+                          x <- as.data.frame(x)
+                          names(x) <- c('lon', 'lat', 'elevation')
+                          return(x)
+                        }
+    )
+
     ## Calculate bbox and show
     ### Bind all tables
     lonlat_corners <- lapply(track_lst, function(x) {x <- x$table}) %>% 
@@ -117,7 +121,7 @@ GetMapObjects <- function(go_boundBox = TRUE,
   
   
   # ============================================================================
-  # Elevation raster
+  # Elevation
   
   ## Load
   ele_raster <- readRDS(file.path(ele_folder, ele_file))
@@ -139,6 +143,10 @@ GetMapObjects <- function(go_boundBox = TRUE,
       raster::mask(mapShape) %>% 
       raster::crop(with(boundingBox, c(p1$x, p2$x, p1$y, p2$y)))
   }
+  
+  ## If there is a track, get elevation from raster
+  trackTable$elevation <- extract(rasterObject, TransformCoordinates(trackTable, is.lonLat = T))
+  
   
   
   # ============================================================================
