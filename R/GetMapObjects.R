@@ -246,6 +246,7 @@ GetMapObjects <- function(go_boundBox = TRUE,
   return(list(
     track_lst = track_lst,
     ele_matrix = ele_matrix,
+    ele_raster = ele_raster,
     tif_tensor = tif_tensor
   ))
 }
