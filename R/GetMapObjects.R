@@ -153,6 +153,7 @@ GetMapObjects <- function(go_boundBox = TRUE,
                       }
   )
   
+  
   # ============================================================================
   # TIF raster
   
@@ -161,18 +162,25 @@ GetMapObjects <- function(go_boundBox = TRUE,
     ## Load a georeferenced TIF from disk
     tif_raster <- raster::stack(file.path(tif_folder, tif_name))
     
+    if (!is.null(boundingBox)){
+      tif_raster <- raster::crop(tif_raster, 
+                                 with(boundingBox, c(p1$x, p2$x, p1$y, p2$y))
+      )
+    }
+    
     cat(sprintf(' TIF name: %s\n', tif_name))
     cat(sprintf(' TIF no. layers: %d\n ', nlayers(tif_raster)))
     cat(sprintf('TIF CRS: %s\n', raster::crs(tif_raster)))
     
     ## Mask using shape
     if (go_mask_tif){
-      mapShape <- readRDS(paste0(shape_folder, shape_name)) %>% 
+      mapShape <- readRDS(file.path(shape_folder, shape_name)) %>% 
         sp::spTransform(CRSobj = crs(tif_raster))
       
       tif_raster <- tif_raster %>% 
         raster::crop(extent(mapShape)) %>% 
-        raster::mask(mapShape)
+        raster::mask(mapShape) %>% 
+        raster::crop(with(boundingBox, c(p1$x, p2$x, p1$y, p2$y)))
     }
     
     ## Crop to bounding box
