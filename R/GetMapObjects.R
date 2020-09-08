@@ -131,8 +131,9 @@ GetMapObjects <- function(go_boundBox = TRUE,
     ele_raster <- raster::crop(ele_raster, with(boundingBox, c(p1$x, p2$x, p1$y, p2$y)))
   }
   
-  cat(sprintf('Elevation raster %s with CRS: \n %s\n', ele_file, raster::crs(ele_raster)))
-  
+  cat(sprintf('Elevation name: %s \n', ele_file))
+  cat(sprintf('Elevation CRS: %s\n', raster::crs(ele_raster)))
+
   ## Mask if requested
   if (go_mask_elevation){
     mapShape <- readRDS(paste0(shape_folder, shape_name)) %>% 
@@ -168,8 +169,8 @@ GetMapObjects <- function(go_boundBox = TRUE,
       )
     }
     
-    cat(sprintf(' TIF name: %s\n', tif_name))
-    cat(sprintf(' TIF no. layers: %d\n ', nlayers(tif_raster)))
+    cat(sprintf('TIF name: %s\n', tif_name))
+    cat(sprintf('TIF no. layers: %d\n', nlayers(tif_raster)))
     cat(sprintf('TIF CRS: %s\n', raster::crs(tif_raster)))
     
     ## Mask using shape
@@ -213,7 +214,7 @@ GetMapObjects <- function(go_boundBox = TRUE,
   
   ## Elevation raster
   ele_matrix <- rayshader::raster_to_matrix(ele_raster, verbose = FALSE)
-  cat(sprintf('Size of the elevation matrix is %d x %d\n', dim(ele_matrix)[1], dim(ele_matrix)[2]))
+  cat(sprintf('Size of the elevation matrix: %d x %d\n', dim(ele_matrix)[1], dim(ele_matrix)[2]))
   
   ### Remove NAs (ocean)
   ele_matrix[is.na(ele_matrix)] <- 0
@@ -235,7 +236,7 @@ GetMapObjects <- function(go_boundBox = TRUE,
   
   ### Transpose to abide by the elevation raster orientation
   tif_tensor <- aperm(tif_tensor, c(2, 1, 3))
-  cat(sprintf('Size of the TIF tensor is %d x %d x %d\n', 
+  cat(sprintf('Size of the TIF tensor: %d x %d x %d\n', 
               dim(tif_tensor)[1], dim(tif_tensor)[2], dim(tif_tensor)[3]
   ))
 
