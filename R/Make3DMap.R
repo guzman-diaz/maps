@@ -9,7 +9,7 @@ Make3DMap <- function(mapObject_lst,
   track_lst <- mapObject_lst[['track_lst']]
 
   
-  # Plot
+  # Plot surface
   plot_3d(tif_tensor, ele_matrix, 
           windowsize = c(1100,900), 
           zscale = zscale, zoom = 0.65, 
@@ -18,11 +18,14 @@ Make3DMap <- function(mapObject_lst,
   )  
   
   
-  add_gps_to_rayshader(ele_raster, 
-                       lat = track_lst[[1]]$lat, 
-                       lon = track_lst[[1]]$lon, 
-                       alt = track_lst[[1]]$elevation, 
-                       zscale = zscale,
-                       alpha = 1
+  # Overlay tracks
+  lapply(track_lst, function(x)
+    geoviz::add_gps_to_rayshader(ele_raster, 
+                                 lat = x$lat, 
+                                 lon = x$lon, 
+                                 alt = x$elevation, 
+                                 zscale = zscale,
+                                 alpha = 1
+    )
   )
 }
