@@ -5,12 +5,6 @@ Make3DMap <- function(mapObjects_lst){
   tif_raster <- mapObject_lst[['tif_raster']]
   track_lst <- mapObject_lst[['track_lst']]
   
-  # Transform elevation to matrix
-  ele_matrix <- rayshader::raster_to_matrix(ele_raster)
-
-  ## Remove NAs (ocean)
-  ele_matrix[is.na(ele_matrix)] <- 0
-  
   
   # Transform TIF
   

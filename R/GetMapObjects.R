@@ -213,19 +213,38 @@ GetMapObjects <- function(go_boundBox = TRUE,
   
   ## Elevation raster
   ele_matrix <- rayshader::raster_to_matrix(ele_raster, verbose = FALSE)
-  cat(sprintf('Size of the elevation matrix is %d x %d', dim(ele_matrix)[1], dim(ele_matrix)[2]))
+  cat(sprintf('Size of the elevation matrix is %d x %d\n', dim(ele_matrix)[1], dim(ele_matrix)[2]))
   
   ### Remove NAs (ocean)
   ele_matrix[is.na(ele_matrix)] <- 0
   
+  ## TIF raster
+  ### Transform each band to array
+  tif_tensor_1 <- rayshader::raster_to_matrix(tif_raster[[1]], verbose = FALSE)
+  tif_tensor_2 <- rayshader::raster_to_matrix(tif_raster[[2]], verbose = FALSE)
+  tif_tensor_3 <- rayshader::raster_to_matrix(tif_raster[[3]], verbose = FALSE)
   
+  ## Merge band arrays into one tensor:
+  ### Initialize
+  tif_tensor <- array(0, dim = c(nrow(tif_tensor_1), ncol(tif_tensor_1), 3))
   
+  ### Merge
+  tif_tensor[, , 1] <- tif_tensor_1/255 
+  tif_tensor[, , 2] <- tif_tensor_2/255 
+  tif_tensor[, , 3] <- tif_tensor_3/255
+  
+  ### Transpose to abide by the elevation raster orientation
+  tif_tensor <- aperm(tif_tensor, c(2, 1, 3))
+  cat(sprintf('Size of the TIF tensor is %d x %d x %d\n', 
+              dim(tif_tensor)[1], dim(tif_tensor)[2], dim(tif_tensor)[3]
+  ))
+
   
   # ============================================================================
   # Output
   return(list(
     track_lst = track_lst,
-    ele_raster = ele_raster,
-    tif_raster = tif_raster
+    ele_matrix = ele_matrix,
+    tif_tensor = tif_tensor
   ))
 }
