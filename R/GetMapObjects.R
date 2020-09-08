@@ -209,6 +209,19 @@ GetMapObjects <- function(go_boundBox = TRUE,
   
   
   # ============================================================================
+  # Raster to matrix conversion
+  
+  ## Elevation raster
+  ele_matrix <- rayshader::raster_to_matrix(ele_raster, verbose = FALSE)
+  cat(sprintf('Size of the elevation matrix is %d x %d', dim(ele_matrix)[1], dim(ele_matrix)[2]))
+  
+  ### Remove NAs (ocean)
+  ele_matrix[is.na(ele_matrix)] <- 0
+  
+  
+  
+  
+  # ============================================================================
   # Output
   return(list(
     track_lst = track_lst,
