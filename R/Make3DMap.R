@@ -22,8 +22,6 @@ Make3DMap <- function(mapObject_lst,
   
   
   # Plot 3D
-  if (!go_animate){
-    
     ## Plot surface
     plot_3d(tif_tensor, ele_matrix,
             windowsize = c(1100,900),
@@ -31,9 +29,11 @@ Make3DMap <- function(mapObject_lst,
             phi = 45, theta = theta_ini, fov = 30,
             background = "#F2E1D0", shadowcolor = "#523E2B"
     )
-  
-  
-    ## Overlay tracks
+    
+    
+    if (!go_animate){
+      
+      ## Overlay tracks
     lapply(track_lst, function(x){
       ## Tranform track CRS to UTM
       x[, 1:2] <- TransformCoordinates(x[, 1:2], is.lonLat = T)
@@ -84,11 +84,10 @@ Make3DMap <- function(mapObject_lst,
         }
         
         #### Render the path segment
-        render_path(extent = attr(ele_raster, 'extent'),
-                    lat = unlist(x$lat),
-                    long = unlist(x$lon),
-                    altitude = NULL,
-                    zscale = zscale,
+        render_path(extent = attr(ele_raster, 'extent'), 
+                    lat = unlist(x[1:track_idx[frame_id], 'lat']), 
+                    long = unlist(x[1:track_idx[frame_id], 'lon']), 
+                    altitude = NULL, 
                     heightmap = ele_matrix / zscale,
                     color = 'red',
                     offset = 1
@@ -96,7 +95,7 @@ Make3DMap <- function(mapObject_lst,
         
         #### Render the camera view
         render_camera(theta= theta_ini + view_angle[frame_id])
-
+        
         #### Save snapshot in disk
         render_snapshot(filename = file.path(here::here('tmp', sprintf('videoFrame%i.png', frame_id))))
       }
@@ -113,4 +112,4 @@ Make3DMap <- function(mapObject_lst,
       file.remove()
   }
   
-  }
+}
