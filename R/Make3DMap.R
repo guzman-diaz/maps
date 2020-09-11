@@ -2,9 +2,10 @@ Make3DMap <- function(mapObject_lst,
                       zscale = 50,
                       frames_rate = 30, # frames/second
                       video_seconds = 10,
-                      path_laps = 3, # laps/video_seconds
+                      path_laps = 1, # laps/video_seconds
                       camera_laps = 2, # laps/video_seconds
-                      theta_ini = -45, # degrees
+                      go_animate_at_once = TRUE, 
+                      theta_ini = 135, # degrees
                       go_animate = F
 ){
   
@@ -58,6 +59,9 @@ Make3DMap <- function(mapObject_lst,
     ## Calculate required number of frames
     frames_num <- video_seconds * frames_rate
     
+    ## Define set of angles that guarantees the required number of camera laps
+    view_angle <- seq(0, 360*camera_laps, length.out = frames_num)
+    
     lapply(track_lst[1], function(x){ # if a track list is provided, use only the first track
       
       ## Transform track CRS to UTM
@@ -71,9 +75,6 @@ Make3DMap <- function(mapObject_lst,
                                length.out = frames_num / path_laps + 1
       ))[-1] %>% 
         rep(path_laps)
-      
-      ### Define set of angles that guarantees the required number of camera laps
-      view_angle <- seq(0, 360*camera_laps, length.out = frames_num)
       
       ### Loop over all frames
       for (frame_id in 1:frames_num){
@@ -94,15 +95,28 @@ Make3DMap <- function(mapObject_lst,
         )
         
         #### Render the camera view
-        render_camera(theta= theta_ini + view_angle[frame_id])
+        if (go_animate_at_once){
+          render_camera(theta = theta_ini + view_angle[frame_id])
+        }
         
         #### Save snapshot in disk
         render_snapshot(filename = file.path(here::here('tmp', sprintf('videoFrame%i.png', frame_id))))
       }
     })
     
+    if (!go_animate_at_once){
+      for (frame_id in 1:frames_num){
+        #### Render camera view if not concurrent with path animation
+        render_camera(theta = theta_ini + view_angle[frame_id])
+        
+        #### Save snapshot in disk
+        render_snapshot(filename = file.path(here::here('tmp', sprintf('videoFrame%i.png', frame_id + frames_num))))
+      }
+    }
+    
     ## Encode video
-    av::av_encode_video(file.path(here::here('tmp', sprintf('videoFrame%i.png', seq(1, frames_num, by=1)))),
+    frames_num <- length(dir(here::here('tmp'), pattern = 'videoFrame*'))
+    av::av_encode_video(file.path(here::here('tmp', sprintf('videoFrame%i.png', seq(1, frames_num, by = 1)))),
                         framerate = frames_rate,
                         output =here::here('output', 'animation.mp4')
     )
