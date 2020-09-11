@@ -1,5 +1,11 @@
 Make3DMap <- function(mapObject_lst,
-                      zscale = 50
+                      zscale = 50,
+                      frames_rate = 30, # frames/second
+                      video_seconds = 10,
+                      path_laps = 3, # laps/video_seconds
+                      camera_laps = 2, # laps/video_seconds
+                      theta_ini = -45, # degrees
+                      go_animate = F
 ){
   
   # Unlist
@@ -10,7 +16,9 @@ Make3DMap <- function(mapObject_lst,
   
   
   # Close previous plot
-  rgl::rgl.close()
+  if (rgl::rgl.cur() != 0){
+    rgl::rgl.close()
+  }
   
   
   # Plot surface
@@ -40,17 +48,20 @@ Make3DMap <- function(mapObject_lst,
     #   )
     # })
     # 
-    # Overlay tracks
-    lapply(track_lst[1], function(x){
+
+  # Animate
+  if (go_animate){
+    
+    ## Calculate required number of frames
+    frames_num <- video_seconds * frames_rate
+    
+    lapply(track_lst[1], function(x){ # if a track list is provided, use only the first track
+      
       ## Transform track CRS to UTM
       x[, 1:2] <- TransformCoordinates(x[, 1:2], is.lonLat = T)
       
-      ## Render path
-      frames_num <-500
-      video_seconds <- 10
-      frames_rate <- frames_num / video_seconds
-
-      path_laps <- 3
+      ## Render frames
+      ### Define track segments: each segment from point 1 to 'track_idx[frame_id]'
       track_length <- nrow(x)
       track_idx <- ceiling(seq(from = 1, 
                                to = track_length, 
@@ -58,13 +69,13 @@ Make3DMap <- function(mapObject_lst,
       ))[-1] %>% 
         rep(path_laps)
       
-      view_laps <- 2      
-      view_angle <- seq(0, 360*view_laps, length.out = frames_num)
+      ### Define set of angles that guarantees the required number of camera laps
+      view_angle <- seq(0, 360*camera_laps, length.out = frames_num)
       
+      ### Loop over all frames
       for (frame_id in 1:frames_num){
         
-        #### Select track indices of the frame path segment
-
+        #### If lap completed, delete path and start over
         if (track_idx[frame_id] == min(track_idx) & frame_id > 1){
           render_path(clear_previous = T)
         }
@@ -79,9 +90,10 @@ Make3DMap <- function(mapObject_lst,
                     offset = 1
         )
         
-        #### Render the point of view
-        render_camera(theta= -45 + view_angle[frame_id])
+        #### Render the camera view
+        render_camera(theta= theta_ini + view_angle[frame_id])
 
+        #### Save snapshot in disk
         render_snapshot(filename = file.path(here::here('tmp', sprintf('videoFrame%i.png', frame_id))))
       }
     })
@@ -89,13 +101,12 @@ Make3DMap <- function(mapObject_lst,
     ## Encode video
     av::av_encode_video(file.path(here::here('tmp', sprintf('videoFrame%i.png', seq(1, frames_num, by=1)))),
                         framerate = frames_rate,
-                        output = "animation.mp4"
+                        output =here::here('output', 'animation.mp4')
     )
     
-    
-    # angles<- seq(0, 360, length.out = 1441)[-1]
-    # for(i in 1:1440) {
-    #   render_camera(theta = -45+angles[i])
-    # }
-    # rgl::rgl.close()
+    ## Remove frame files
+    dir(here::here('tmp'), pattern = 'videoFrame*', full.names = T) %>% 
+      file.remove()
+  }
+  
   }
