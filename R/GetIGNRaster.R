@@ -69,6 +69,9 @@ GetIGNRaster <- function(go_boundBox = TRUE,
   }
   
   
+  # Bounding box (in UTM30)
+  bbox <- raster::extent(ReprojectLonLatUTM(track_tbl))
+  
   # Get tile numbers
   ## Load corner table
   cornerTable <- readRDS(here::here('data', 'cornerData.rds')) %>% 
@@ -76,10 +79,10 @@ GetIGNRaster <- function(go_boundBox = TRUE,
   
   ## Filter
   tile_set <- cornerTable %>% 
-    dplyr::filter(xmin < boundingBox$p2$x) %>% 
-    dplyr::filter(xmax > boundingBox$p1$x) %>% 
-    dplyr::filter(ymin < boundingBox$p2$y) %>% 
-    dplyr::filter(ymax > boundingBox$p1$y) %>% 
+    dplyr::filter(xmin < bbox@xmax) %>% 
+    dplyr::filter(xmax > bbox@xmin) %>% 
+    dplyr::filter(ymin < bbox@ymax) %>% 
+    dplyr::filter(ymax > bbox@ymin) %>% 
     dplyr::select(name) %>% 
     unlist()
   
