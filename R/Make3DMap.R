@@ -1,7 +1,8 @@
 Make3DMap <- function(mapObject_lst,
                       zscale = 50,
                       frames_rate = 30, # frames/second
-                      video_seconds = 10,
+                      video_seconds_path = 5,
+                      video_seconds_camera = 10,
                       path_laps = 1, # laps/video_seconds
                       camera_laps = 2, # laps/video_seconds
                       go_animate_at_once = TRUE, 
@@ -57,10 +58,11 @@ Make3DMap <- function(mapObject_lst,
   if (go_animate){
     
     ## Calculate required number of frames
-    frames_num <- video_seconds * frames_rate
+    frames_num_path <- video_seconds_path * frames_rate
+    frames_num_camera <- video_seconds_camera * frames_rate
     
     ## Define set of angles that guarantees the required number of camera laps
-    view_angle <- seq(0, 360*camera_laps, length.out = frames_num)
+    view_angle <- seq(0, 360*camera_laps, length.out = frames_num_camera)
     
     lapply(track_lst[1], function(x){ # if a track list is provided, use only the first track
       
@@ -72,12 +74,12 @@ Make3DMap <- function(mapObject_lst,
       track_length <- nrow(x)
       track_idx <- ceiling(seq(from = 1, 
                                to = track_length, 
-                               length.out = frames_num / path_laps + 1
+                               length.out = frames_num_path / path_laps + 1
       ))[-1] %>% 
         rep(path_laps)
       
       ### Loop over all frames
-      for (frame_id in 1:frames_num){
+      for (frame_id in 1:frames_num_path){
         
         #### If lap completed, delete path and start over
         if (track_idx[frame_id] == min(track_idx) & frame_id > 1){
@@ -105,12 +107,12 @@ Make3DMap <- function(mapObject_lst,
     })
     
     if (!go_animate_at_once){
-      for (frame_id in 1:frames_num){
+      for (frame_id in 1:frames_num_camera){
         #### Render camera view if not concurrent with path animation
         render_camera(theta = theta_ini + view_angle[frame_id])
         
         #### Save snapshot in disk
-        render_snapshot(filename = file.path(here::here('tmp', sprintf('videoFrame%i.png', frame_id + frames_num))))
+        render_snapshot(filename = file.path(here::here('tmp', sprintf('videoFrame%i.png', frame_id + frames_num_path))))
       }
     }
     
