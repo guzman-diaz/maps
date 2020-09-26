@@ -71,28 +71,31 @@ GetIGNRaster <- function(go_boundBox = TRUE,
   
   # Define bounding box from tracks (in UTM30)
   boundingBox <- track_tbl %>% 
-    ### Transform to UTM30, i.e. epsg:32630
-    # sp::spTransform(sp::CRS('+init=epsg:32630')) %>% 
     ### Calculate extent
     raster::extent()
  
   
   # ============================================================================
-  # Redefine bounding box using map selection
+  # Process bounding box
+
   if (!exists('boundingBox')){
     boundingBox <- NULL
   }
-  
+
+  ## Redefine bounding box using map selection
   if (go_boundBox){
     SelectMapArea(environment = environment(), boundingBox = boundingBox)
     
     DisplayOSM(boundingBox, graticuleInterval = 0.1)
   }
   
+  ## Transform to UTM30, i.e. epsg:32630
+  boundingBox <- as(boundingBox, 'SpatialPolygons')
+  sp::proj4string(boundingBox) <- sp::CRS('+init=epsg:4326') # lon-lat projection
+  boundingBox <-boundingBox %>% 
+    sp::spTransform(sp::CRS('+init=epsg:32630')) %>% 
+    raster::extent()
   
-  
-  
-
   # ============================================================================
   # Get tile numbers
 
@@ -102,10 +105,10 @@ GetIGNRaster <- function(go_boundBox = TRUE,
   
   ## Filter
   tile_set <- cornerTable %>% 
-    dplyr::filter(xmin < bbox@xmax) %>% 
-    dplyr::filter(xmax > bbox@xmin) %>% 
-    dplyr::filter(ymin < bbox@ymax) %>% 
-    dplyr::filter(ymax > bbox@ymin) %>% 
+    dplyr::filter(xmin < boundingBox@xmax) %>% 
+    dplyr::filter(xmax > boundingBox@xmin) %>% 
+    dplyr::filter(ymin < boundingBox@ymax) %>% 
+    dplyr::filter(ymax > boundingBox@ymin) %>% 
     dplyr::select(name) %>% 
     unlist()
   
