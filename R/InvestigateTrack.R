@@ -1,100 +1,103 @@
-InvestigateTrack <- function(trackContainerFolder,
-                             boundingBox = NULL,
-                             go.useStoredRaste = TRUE
-                             ){
+InvestigateTrack <- function(go_boundBox = TRUE,
+                             track_folder = here::here('data', 'tracks', 'redes'),
+                             track_file = '*' # NULL if no track is employed
+){
   
+  pacman::p_load(rayshader)
   pacman::p_load(rgdal)
   pacman::p_load(proj4)
   pacman::p_load(raster)
   pacman::p_load(geoviz)
   pacman::p_load(shiny)
   pacman::p_load(leaflet)
-  pacman::p_load(maptools)
-
-  source(here::here('R', 'DefineBoundingBox.R'))  
-  source(here::here('R', 'ShowOSM.R'))  
-  source(here::here('R', 'TransformCoordinates.R'))  
-  source(here::here('R', 'FindIGNTiles.R'))  
-  source(here::here('R', 'ImportIGNTiles.R'))  
-  source(here::here('R', 'CropRaster.R'))  
-  source(here::here('R', 'AssesTrackOnMap.R'))  
+  pacman::p_load(geosphere)
+  pacman::p_load(psyosphere)
+  
   
 
-  # Load all tracks in the folder  
-  ## List the kmz files in a given folder path
-  kmzFileNames <- list.files(here::here('data', 'tracks', trackContainerFolder), 
-                             pattern = '*.kmz', 
-                             full.names = FALSE
-  )
+  # ============================================================================
+  # Source files
+  source(here::here('R', 'SelectMapArea.R'))
+  source(here::here('R', 'DisplayOSM.R'))
+  source(here::here('R', 'TransformCoordinates.R'))
   
-  ## Unzip each KMZ file 
-  trackList <- lapply(kmzFileNames, 
-                      function(x) 
-                        maptools::getKMLcoordinates(kmlfile = unzip(zipfile = paste0(here::here('data', 'tracks', trackContainerFolder), '/', x),
-                                                                    exdir   = here::here('data', 'tracks', 'out')
-                        ), 
-                        ignoreAltitude = FALSE)
-  )
   
-  ## If more than one track was found unbundled in the folder, flatten the list
-  if (length(trackList) > 1){
-    trackList <- unlist(trackList, recursive = FALSE)
-  }
+  # ============================================================================
+  # Tracks
   
-  ## Remove odd elements (useless information)
-  trackList <- trackList[[1]][seq(2, length(trackList[[1]]), 2)]
-  
-  ## Format list elements
-  trackList <- lapply(trackList, function(x) {
-    x <- list(table = data.frame(lon = x[, 1], lat = x[, 2]),
-              elevation = x[, 3]
+  if (!is.null(track_file)){
+    ## Get the kmz file name in the folder path
+    if (track_file == '*'){
+      track_file <- list.files(track_folder, pattern = '*.kmz', full.names = FALSE)
+    }
+    
+    ## Unzip each KMZ file 
+    track_lst <- lapply(track_file, 
+                        function(x) 
+                          maptools::getKMLcoordinates(kmlfile = unzip(zipfile = file.path(track_folder, x),
+                                                                      exdir = here::here('tmp')
+                          ), 
+                          ignoreAltitude = FALSE)
     )
-  })
-  
-  
-  # Calculate bbox and show
-  if (is.null(boundingBox)){
-    boundingBox <- DefineBoundingBox(trackList = trackList, zoomLevel = 1.1)
-  }
-  
-  ShowOSM(boundingBox, graticuleInterval = 0.1, trackList = trackList)
-  
-  
-  # Get tiles from IGN
-  
-  ## Obtain tile codes
-  tileSet <- FindIGNTiles(boundingBox = boundingBox)
-  cat('Tile numbers: ')
-  cat(tileSet)
-  cat('\n')
-  
-  ## Import data into raster objects
-  if (go.useStoredRaste){
-    ### Previously saved raster
-    cat('Loading raster object from disk...')
-    rasterObject <- readRDS(here::here('data', 'tracks', trackContainerFolder, 'rasterObject.rds'))
-    cat('finished\n')
+    
+    ## If more than one track was found unbundled in the folder, flatten the list
+    if (length(track_lst) > 1){
+      track_lst <- unlist(track_lst, recursive = FALSE)
+      
+      ## Remove odd elements (useless information)
+      track_lst <- lapply(track_lst, function(x) {if (nrow(x) == 1) {NULL} else {x}})
+      track_lst[sapply(track_lst, is.null)] <- NULL
+    } else {
+      track_lst <- unlist(track_lst, recursive = FALSE)
+      track_lst <- lapply(track_lst, function(x) {if (nrow(x) == 1) {NULL} else {x}})
+      track_lst[sapply(track_lst, is.null)] <- NULL
+    }
+    
+    ## Convert elements to data frames and name them
+    track_lst <- lapply(track_lst,
+                        function(x){
+                          x <- as.data.frame(x)
+                          names(x) <- c('x', 'y', 'z')
+                          ### Convert to SP object
+                          sp::coordinates(x) <- names(x)
+                          ### Assign lonlat CRS
+                          sp::proj4string(x) <- sp::CRS('+init=epsg:4326') # lon-lat
+                          return(x)
+                        }
+    )
+    
+    
+    ## Calculate bbox and show
+    ### Bind all tables
+    track_tbl <- lapply(track_lst, function(x) as.data.frame(x@coords)) %>% 
+      dplyr::bind_rows()
+    sp::coordinates(track_tbl) <- names(track_tbl)
+    sp::proj4string(track_tbl) <- sp::CRS('+init=epsg:4326') # lon-lat projection
+    
+    ### Show result
+    DisplayOSM(mapObject_sp = track_tbl, graticuleInterval = 0.1, track_lst = track_lst)
   } else {
-    ### Download 
-    cat('Creating raster object...')
-    rasterObject <- ImportIGNTiles(tileSet, 
-                                   tileResolution = 25,
-                                   folderName = NULL # from NAS \\pocpaco\maps\
-    )
-    
-    ### Crop
-    rasterObject <- CropRaster(rasterObject, boundingBox)
-    
-    ### Save raster
-    saveRDS(rasterObject, here::here('data', 'tracks', trackContainerFolder, 'rasterObject.rds'))
-    cat('finished\n')
+    track_lst <- NA
+  }
+  
+  # Define bounding box from tracks
+  boundingBox <- track_tbl %>% 
+    ### Calculate extent
+    raster::extent()
+  
+  
+  # ============================================================================
+  # Process bounding box
+  
+  if (!exists('boundingBox')){
+    boundingBox <- NULL
+  }
+  
+  ## Redefine bounding box using map selection
+  if (go_boundBox){
+    SelectMapArea(environment = environment(), boundingBox = boundingBox)
+    DisplayOSM(boundingBox, graticuleInterval = 0.1)
   }
   
   
-  # Select points
-  rm(pointTable, envir = .GlobalEnv)
-  rm(proposedTrack, envir = .GlobalEnv)
-  
-  AssesTrackOnMap(trackList = trackList, boundingBox = boundingBox, rasterObject = rasterObject)
-
 }
