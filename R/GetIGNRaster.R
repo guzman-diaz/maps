@@ -9,6 +9,7 @@ GetIGNRaster <- function(go_boundBox = TRUE,
   source(here::here('R', 'SelectMapArea.R'))
   source(here::here('R', 'DisplayOSM.R'))
   source(here::here('R', 'TransformCoordinates.R'))
+  source(here::here('R', 'ReprojectLonLatUTM.R'))
 
   # ============================================================================
   # Tracks
@@ -87,17 +88,26 @@ GetIGNRaster <- function(go_boundBox = TRUE,
     unlist()
   
   
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   # Process
   
   ## Initialize
   rasterObject <- list()
-  
-  ## Define file name
-  if (is.null(ele_folder)){
-    ele_folder <- '\\\\pocpaco\\maps\\elevation\\'
-  } else {
-    ele_folder <- paste(ele_folder, '/', sep = '')
-  }
   
   ## Import individual tiles in a list
   for (tile_id in 1:length(tile_set)){
@@ -111,7 +121,7 @@ GetIGNRaster <- function(go_boundBox = TRUE,
     )
     
     if (file.exists(tile_file)){
-      rasterObject[[tile_id]] <- raster(tile_file)
+      rasterObject[[tile_id]] <- raster::raster(tile_file)
     } else {
       stop(sprintf('Tile number %04d not found. Go to http://centrodedescargas.cnig.es/CentroDescargas/catalogo.do?Serie=LIDAR', tile_set[tile_id]))
     }
