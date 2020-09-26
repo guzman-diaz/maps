@@ -1,6 +1,6 @@
 DisplayOSM <- function(mapObject_sp = NULL,
-                         track_lst = NULL,
-                         graticuleInterval = 0.1
+                       track_lst = NULL,
+                       graticuleInterval = 0.1
 ){
   
   pacman::p_load(leaflet)
@@ -37,18 +37,18 @@ DisplayOSM <- function(mapObject_sp = NULL,
   if (!is.null(track_lst)){
     for (track_id in 1:length(track_lst)){
       mapObject_leaflet <- mapObject_leaflet %>%
-      addPolylines(map = .,
-                   lng = track_lst[[track_id]]@coords[, 1],
-                   lat = track_lst[[track_id]]@coords[, 2], 
-                   weight = 3, opacity = 1.0,
-                   color = c('#e6194b', '#3cb44b', '#ffe119', '#4363d8', 
-                             '#f58231', '#911eb4', '#46f0f0', '#f032e6', 
-                             '#bcf60c', '#fabebe', '#008080', '#e6beff', 
-                             '#9a6324', '#fffac8', '#800000', '#aaffc3', 
-                             '#808000', '#ffd8b1', '#000075', '#808080'
-                   )[track_id],
-                   highlightOptions = highlightOptions(bringToFront = T, opacity = 1, weight = 5, sendToBack = FALSE, color = 'white')
-      )
+        addPolylines(map = .,
+                     lng = track_lst[[track_id]]@coords[, 1],
+                     lat = track_lst[[track_id]]@coords[, 2], 
+                     weight = 3, opacity = 1.0,
+                     color = c('#e6194b', '#3cb44b', '#ffe119', '#4363d8', 
+                               '#f58231', '#911eb4', '#46f0f0', '#f032e6', 
+                               '#bcf60c', '#fabebe', '#008080', '#e6beff', 
+                               '#9a6324', '#fffac8', '#800000', '#aaffc3', 
+                               '#808000', '#ffd8b1', '#000075', '#808080'
+                     )[track_id],
+                     highlightOptions = highlightOptions(bringToFront = T, opacity = 1, weight = 5, sendToBack = FALSE, color = 'white')
+        )
     }
   }
   
@@ -66,6 +66,6 @@ DisplayOSM <- function(mapObject_sp = NULL,
         )
     }
   }
-
+  
   print(mapObject_leaflet)
 }
