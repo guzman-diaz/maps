@@ -1,25 +1,17 @@
 InvestigateTrack <- function(go_boundBox = TRUE,
                              track_folder = here::here('data', 'tracks', 'redes'),
-                             track_file = '*' # NULL if no track is employed
+                             track_file = '*',
+                             ele_folder = '\\\\pocpaco\\maps\\rasters\\',
+                             ele_file = 'Asturias.rds'
+                             
 ){
-  
-  pacman::p_load(rayshader)
-  pacman::p_load(rgdal)
-  pacman::p_load(proj4)
-  pacman::p_load(raster)
-  pacman::p_load(geoviz)
-  pacman::p_load(shiny)
-  pacman::p_load(leaflet)
-  pacman::p_load(geosphere)
-  pacman::p_load(psyosphere)
-  
   
 
   # ============================================================================
   # Source files
   source(here::here('R', 'SelectMapArea.R'))
   source(here::here('R', 'DisplayOSM.R'))
-  source(here::here('R', 'TransformCoordinates.R'))
+  source(here::here('R', 'AssesTrackOnMap.R'))
   
   
   # ============================================================================
@@ -98,6 +90,17 @@ InvestigateTrack <- function(go_boundBox = TRUE,
     SelectMapArea(environment = environment(), boundingBox = boundingBox)
     DisplayOSM(boundingBox, graticuleInterval = 0.1)
   }
+  
+  
+  # ============================================================================
+  # Load raster
+
+  ele_raster <- readRDS(file.path(ele_folder, ele_file))
+  
+  AssesTrackOnMap(track_lst = if (exists('track_lst')) {track_lst} else {NULL},
+                  boundingBox = boundingBox,
+                  rasterObject = ele_raster
+                  )
   
   
 }

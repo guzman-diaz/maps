@@ -1,4 +1,4 @@
-AssesTrackOnMap <- function(trackList,
+AssesTrackOnMap <- function(track_lst,
                             graticuleInterval = 0.01,
                             go.showCumulative = T,
                             boundingBox = boundingBox,
@@ -7,8 +7,8 @@ AssesTrackOnMap <- function(trackList,
   
   source(here::here('R', 'ProcessSelectedPoints.R'))
   
-  if (is.data.frame(trackList)){
-    trackList <- list(list(table = trackList))
+  if (is.data.frame(track_lst)){
+    track_lst <- list(list(table = track_lst))
   }
   
   
@@ -21,10 +21,7 @@ AssesTrackOnMap <- function(trackList,
   
   server <- function(input, output, session) {
     
-    output$myMap <- renderLeaflet({ShowOSM(boundingBox = boundingBox, 
-                                           graticuleInterval = graticuleInterval, 
-                                           trackList = trackList
-    )})
+    output$myMap <- renderLeaflet({DisplayOSM(boundingBox, graticuleInterval = 0.1)})
     
     ## Observe "Done" button events
     observeEvent(input$doneButton, {
@@ -40,7 +37,7 @@ AssesTrackOnMap <- function(trackList,
       clickedPoint <- input$myMap_marker_click
       pointCoords <- c(lon = clickedPoint$lng, lat = clickedPoint$lat, id = clickedPoint$id)
 
-      ProcessSelectedPoints(trackList = trackList, pointCoords = pointCoords, rasterObject = rasterObject)
+      ProcessSelectedPoints(track_lst = track_lst, pointCoords = pointCoords, rasterObject = rasterObject)
 
       leafletProxy('myMap') %>%
         addCircles(lng = clickedPoint$lng, lat = clickedPoint$lat, group = 'circles',
@@ -54,7 +51,7 @@ AssesTrackOnMap <- function(trackList,
       clickedPoint <- input$myMap_click
       pointCoords <- c(lon = clickedPoint$lng, lat = clickedPoint$lat, id = 'map')
 
-      pointTable <- ProcessSelectedPoints(trackList = trackList, pointCoords = pointCoords, rasterObject = rasterObject)
+      pointTable <- ProcessSelectedPoints(track_lst = track_lst, pointCoords = pointCoords, rasterObject = rasterObject)
       
       if (go.showCumulative){
         pointText <- sprintf('%.1f km %.0f m', pointTable$cumDist/1e3, pointTable$cumGain_pos) 
