@@ -3,6 +3,8 @@ SelectMapArea <- function(boundingBox = NULL,
                           environment = .GlobalEnv
 ){
   
+  pacman::p_load(shiny)
+  
   # If no bbox provided, select Gijón
   if (is.null(boundingBox)){
     ## Lon-lat coordinates as data frame
@@ -16,9 +18,6 @@ SelectMapArea <- function(boundingBox = NULL,
     
     ## Define bounding box 
     boundingBox <- boundingBox %>% 
-      ### Transform to UTM30, i.e. epsg:32630
-      sp::spTransform(sp::CRS('+init=epsg:32630')) %>% 
-      ### Calculate extent
       raster::extent()
   }
   

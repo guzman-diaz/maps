@@ -20,13 +20,13 @@ ShowOSM <- function(boundingBox,
     addProviderTiles('OpenStreetMap.Mapnik', group = 'Road map') %>%
     addProviderTiles('Esri.WorldImagery', group = 'Satellite') %>%
     addRectangles(
-      lng1 = boundingBox$p1$lon, lat1 = boundingBox$p1$lat,
-      lng2 = boundingBox$p2$lon, lat2 = boundingBox$p2$lat,
+      lng1 = boundingBox@xmin, lat1 = boundingBox@ymin,
+      lng2 = boundingBox@xmax, lat2 = boundingBox@ymax,
       fillColor = 'transparent', weight = '2',
     ) %>%
     fitBounds(
-      lng1 = boundingBox$p1$lon, lat1 = boundingBox$p1$lat,
-      lng2 = boundingBox$p2$lon, lat2 = boundingBox$p2$lat,
+      lng1 = boundingBox@xmin, lat1 = boundingBox@ymin,
+      lng2 = boundingBox@xmax, lat2 = boundingBox@ymax,
     ) %>% 
     addSimpleGraticule(interval = graticuleInterval,
                        group = 'Graticule'
