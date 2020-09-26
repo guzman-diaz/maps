@@ -3,10 +3,23 @@ SelectMapArea <- function(boundingBox = NULL,
                           environment = .GlobalEnv
 ){
   
+  # If no bbox provided, select Gijón
   if (is.null(boundingBox)){
-    boundingBox <- list(p1 = as.list(c(lon = -5.75, lat = 43.45)), 
-                        p2 = as.list(c(lon = -5.55, lat = 43.60))
-    )
+    ## Lon-lat coordinates as data frame
+    boundingBox <- data.frame(x = c(-5.75, -5.55), y = c(43.45, 43.60)) # x = lon; y = lat
+    
+    ## Transform data frame to SpatialPoints class
+    sp::coordinates(boundingBox) <- names(boundingBox)
+    
+    ## Assign lon-lat CRS: epsg:4326
+    sp::proj4string(boundingBox) <- sp::CRS('+init=epsg:4326') # lon-lat
+    
+    ## Define bounding box 
+    boundingBox <- boundingBox %>% 
+      ### Transform to UTM30, i.e. epsg:32630
+      sp::spTransform(sp::CRS('+init=epsg:32630')) %>% 
+      ### Calculate extent
+      raster::extent()
   }
   
   # Window properties
