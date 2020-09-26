@@ -6,10 +6,9 @@ GetIGNRaster <- function(go_boundBox = TRUE,
                          ){
   
   ## Source files
-  # source(here::here('R', 'SelectMapArea.R'))
+  source(here::here('R', 'SelectMapArea.R'))
   source(here::here('R', 'DisplayOSM.R'))
   source(here::here('R', 'TransformCoordinates.R'))
-  source(here::here('R', 'ShowOSM.R'))
 
   # ============================================================================
   # Tracks
@@ -111,24 +110,33 @@ GetIGNRaster <- function(go_boundBox = TRUE,
     dplyr::filter(ymax > boundingBox@ymin) %>% 
     dplyr::select(name) %>% 
     unlist()
+
   
+  # ============================================================================
+  # Check if file exist
+
   
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
+  for (tile_id in 1:length(tile_set)){
+    tile_file <- paste(ele_folder, 
+                       'PNOA_MDT',
+                       sprintf('%02d', tile_resolution),
+                       '_ETRS89_HU30_',
+                       sprintf('%04d', tile_set[tile_id]),
+                       '_LID.asc', 
+                       sep = ''
+    )
+    missing_file <- TRUE
+    while (missing_file) {
+      if (file.exists(tile_file)){
+        missing_file <- FALSE
+      } else {
+        readline(prompt = sprintf('Tile number %04d not found. Go to http://centrodedescargas.cnig.es/CentroDescargas/catalogo.do?Serie=LIDAR', tile_set[tile_id]))
+      }
+    }
+  }
+    
+
+  # ============================================================================
   # Process
   
   ## Initialize
