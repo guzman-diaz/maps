@@ -6,10 +6,10 @@ GetIGNRaster <- function(go_boundBox = TRUE,
                          ){
   
   ## Source files
-  source(here::here('R', 'SelectMapArea.R'))
+  # source(here::here('R', 'SelectMapArea.R'))
   source(here::here('R', 'DisplayOSM.R'))
   source(here::here('R', 'TransformCoordinates.R'))
-  source(here::here('R', 'ReprojectLonLatUTM.R'))
+  source(here::here('R', 'ShowOSM.R'))
 
   # ============================================================================
   # Tracks
@@ -61,7 +61,7 @@ GetIGNRaster <- function(go_boundBox = TRUE,
     track_tbl <- lapply(track_lst, function(x) as.data.frame(x@coords)) %>% 
       dplyr::bind_rows()
     sp::coordinates(track_tbl) <- names(track_tbl)
-    sp::proj4string(track_tbl) <- sp::CRS('+init=epsg:4326')
+    sp::proj4string(track_tbl) <- sp::CRS('+init=epsg:4326') # lon-lat projection
 
     ### Show result
     DisplayOSM(mapObject_sp = track_tbl, graticuleInterval = 0.1, track_lst = track_lst)
@@ -72,14 +72,13 @@ GetIGNRaster <- function(go_boundBox = TRUE,
   # Define bounding box from tracks (in UTM30)
   boundingBox <- track_tbl %>% 
     ### Transform to UTM30, i.e. epsg:32630
-    sp::spTransform(sp::CRS('+init=epsg:32630')) %>% 
+    # sp::spTransform(sp::CRS('+init=epsg:32630')) %>% 
     ### Calculate extent
     raster::extent()
  
   
   # ============================================================================
   # Redefine bounding box using map selection
-  
   if (!exists('boundingBox')){
     boundingBox <- NULL
   }
@@ -87,7 +86,7 @@ GetIGNRaster <- function(go_boundBox = TRUE,
   if (go_boundBox){
     SelectMapArea(environment = environment(), boundingBox = boundingBox)
     
-    ShowOSM(boundingBox, graticuleInterval = 0.1)
+    DisplayOSM(boundingBox, graticuleInterval = 0.1)
   }
   
   
