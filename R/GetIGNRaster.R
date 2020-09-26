@@ -69,11 +69,34 @@ GetIGNRaster <- function(go_boundBox = TRUE,
     track_lst <- NA
   }
   
+  # Define bounding box from tracks (in UTM30)
+  boundingBox <- track_tbl %>% 
+    ### Transform to UTM30, i.e. epsg:32630
+    sp::spTransform(sp::CRS('+init=epsg:32630')) %>% 
+    ### Calculate extent
+    raster::extent()
+ 
   
-  # Bounding box (in UTM30)
-  bbox <- raster::extent(ReprojectLonLatUTM(track_tbl))
+  # ============================================================================
+  # Redefine bounding box using map selection
   
+  if (!exists('boundingBox')){
+    boundingBox <- NULL
+  }
+  
+  if (go_boundBox){
+    SelectMapArea(environment = environment(), boundingBox = boundingBox)
+    
+    ShowOSM(boundingBox, graticuleInterval = 0.1)
+  }
+  
+  
+  
+  
+
+  # ============================================================================
   # Get tile numbers
+
   ## Load corner table
   cornerTable <- readRDS(here::here('data', 'cornerData.rds')) %>% 
     dplyr::filter(UTMzone == 30)
