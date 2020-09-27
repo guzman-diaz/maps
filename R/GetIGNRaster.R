@@ -1,15 +1,17 @@
 GetIGNRaster <- function(go_boundBox = TRUE,
-                         track_folder = here::here('data', 'tracks', 'hibeo'),
+                         track_folder = here::here('data', 'tracks', 'redes'),
                          track_file = '*', # NULL if no track is employed
                          tile_resolution = 25,
                          ele_folder = '\\\\pocpaco\\maps\\elevation\\'
                          ){
   
-  ## Source files
+  # ============================================================================
+  # Source files
   source(here::here('R', 'SelectMapArea.R'))
   source(here::here('R', 'DisplayOSM.R'))
   source(here::here('R', 'TransformCoordinates.R'))
 
+  
   # ============================================================================
   # Tracks
   
@@ -49,7 +51,7 @@ GetIGNRaster <- function(go_boundBox = TRUE,
                           ### Convert to SP object
                           sp::coordinates(x) <- names(x)
                           ### Assign lonlat CRS
-                          sp::proj4string(x) <- sp::CRS('+init=epsg:4326')
+                          sp::proj4string(x) <- sp::CRS('+init=epsg:4326') # lon-lat
                           return(x)
                         }
     )
@@ -68,7 +70,7 @@ GetIGNRaster <- function(go_boundBox = TRUE,
     track_lst <- NA
   }
   
-  # Define bounding box from tracks (in UTM30)
+  # Define bounding box from tracks
   boundingBox <- track_tbl %>% 
     ### Calculate extent
     raster::extent()
@@ -94,6 +96,7 @@ GetIGNRaster <- function(go_boundBox = TRUE,
   boundingBox <-boundingBox %>% 
     sp::spTransform(sp::CRS('+init=epsg:32630')) %>% 
     raster::extent()
+  
   
   # ============================================================================
   # Get tile numbers
@@ -152,24 +155,27 @@ GetIGNRaster <- function(go_boundBox = TRUE,
                       '_LID.asc', 
                       sep = ''
     )
-    
-    if (file.exists(tile_file)){
-      rasterObject[[tile_id]] <- raster::raster(tile_file)
-    } else {
-      stop(sprintf('Tile number %04d not found. Go to http://centrodedescargas.cnig.es/CentroDescargas/catalogo.do?Serie=LIDAR', tile_set[tile_id]))
-    }
+    cat(sprintf('Rastering tile number %04d\n', tile_set[tile_id]))
+    rasterObject[[tile_id]] <- raster::raster(tile_file) %>% 
+      raster::crop(boundingBox)
   }
-  
+
   ## If several tiles, merge
   if (length(rasterObject) > 1){
-    rasterObject.merge <- do.call(merge, rasterObject)
+    cat(sprintf('Merging rasters\n'))
+    rasterObject_merge <- do.call(raster::merge, rasterObject)
   } else {
-    rasterObject.merge <- rasterObject[[1]]
+    rasterObject_merge <- rasterObject[[1]]
   }
   
+  # ## Crop
+  # cat(sprintf('Cropping raster\n'))
+  # rasterObject_merge <- raster::crop(rasterObject_merge, boundingBox)
+  # 
   
+  # ============================================================================
   # Output
-  return(rasterObject)
+  return(rasterObject_merge)
   
   
 }
