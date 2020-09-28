@@ -47,7 +47,7 @@ ProcessSelectedPoints <- function(track_lst,
   # Import tables from global workspace
   points_tbl <<- points_tbl
   
-  proposedTrack <<- proposedTrack
+  track_proposed <<- track_proposed
   
   # Define new row from listened point
   row_new <- points_coords 
@@ -95,7 +95,7 @@ ProcessSelectedPoints <- function(track_lst,
     row_new['gain_neg'] <- min(elevation_diff, 0)
     
     ### Update the proposed track
-    proposedTrack <- rbind(proposedTrack, as.data.frame(row_new[c('lon', 'lat')]))
+    track_proposed <- rbind(track_proposed, as.data.frame(row_new[c('lon', 'lat')]))
     
   } else {
     ## Two points in the same track
@@ -103,41 +103,41 @@ ProcessSelectedPoints <- function(track_lst,
     pointInterval <- as.numeric(substring(row_last$id, 5)):as.numeric(substring(row_new$id, 5))
     
     ### Get the in-between original coords
-    inBetweenPoints <- track_lst[[as.numeric(substr(row_last$id, 1, 3))]]$table[pointInterval, ]
+    points_inBetween <- track_lst[[as.numeric(substr(row_last$id, 1, 3))]]$table[pointInterval, ]
     
     ### If only one record, duplicate to have two points
-    if (nrow(inBetweenPoints) < 2){
-      inBetweenPoints <- rbind(inBetweenPoints, inBetweenPoints)
+    if (nrow(points_inBetween) < 2){
+      points_inBetween <- rbind(points_inBetween, points_inBetween)
     }
     
     ### Compute all intermediate distances
-    for (rowId in 2:nrow(inBetweenPoints)){
-      inBetweenPoints[rowId, 'dist'] <- geosphere::distHaversine(inBetweenPoints[rowId-1, c('lon', 'lat')],
-                                                                 inBetweenPoints[rowId, c('lon', 'lat')]
+    for (row_id in 2:nrow(points_inBetween)){
+      points_inBetween[row_id, 'dist'] <- geosphere::distHaversine(points_inBetween[row_id-1, c('lon', 'lat')],
+                                                                 points_inBetween[row_id, c('lon', 'lat')]
       )
       
     }
     
     ### Retain just the sum to incorporate to the summary table
-    row_new['dist'] <- sum(inBetweenPoints[-1, 'dist'])
+    row_new['dist'] <- sum(points_inBetween[-1, 'dist'])
     
     ### Update the proposed track
     # if (as.numeric(newRow['dist']) != 0 | nrow(proposedTrack) == 0){
-    proposedTrack <- rbind(proposedTrack, as.data.frame(inBetweenPoints[c('lon', 'lat')]))
+    track_proposed <- rbind(track_proposed, as.data.frame(points_inBetween[c('lon', 'lat')]))
     # }
     
     
     ############### TODO: transform in-between coords to utm to extract elevation
     ### Extract elevation
-    for (rowId in 1:nrow(inBetweenPoints)){
-      inBetweenPoints[rowId, 'elevation'] <- raster::extract(
+    for (row_id in 1:nrow(points_inBetween)){
+      points_inBetween[row_id, 'elevation'] <- raster::extract(
         rasterObject,
-        as.data.frame(TransformCoordinates(inBetweenPoints[rowId, c('lon', 'lat')], is.lonLat = T))
+        as.data.frame(TransformCoordinates(points_inBetween[row_id, c('lon', 'lat')], is.lonLat = T))
       )
     }
     
     ### Calculate the elevation gain at each point
-    elevation_diff <- diff(inBetweenPoints$elevation)
+    elevation_diff <- diff(points_inBetween$elevation)
     
     ### The result is the sum of positive and negative
     row_new['gain_pos'] <- sum(elevation_diff[elevation_diff >= 0])
@@ -161,7 +161,7 @@ ProcessSelectedPoints <- function(track_lst,
   
   # Export
   assign('points_tbl', points_tbl, envir =  .GlobalEnv)
-  assign('proposedTrack', proposedTrack, envir =  .GlobalEnv)
+  assign('proposedTrack', track_proposed, envir =  .GlobalEnv)
   
   # Output
   return(points_tbl)
