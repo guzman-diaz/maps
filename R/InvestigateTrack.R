@@ -1,5 +1,4 @@
-InvestigateTrack <- function(go_boundBox = TRUE,
-                             track_folder = here::here('data', 'tracks', 'redes'),
+InvestigateTrack <- function(track_folder = here::here('data', 'tracks', 'redes'),
                              track_file = '*',
                              ele_folder = '\\\\pocpaco\\maps\\rasters\\',
                              ele_file = 'Asturias.rds'
@@ -13,6 +12,7 @@ InvestigateTrack <- function(go_boundBox = TRUE,
   source(here::here('R', 'DisplayOSM.R'))
   source(here::here('R', 'AssesTrackOnMap.R'))
   
+  pacman::p_load(shiny)
   
   # ============================================================================
   # Tracks
@@ -82,11 +82,6 @@ InvestigateTrack <- function(go_boundBox = TRUE,
   # Process bounding box
   
   if (!exists('boundingBox')){
-    boundingBox <- NULL
-  }
-  
-  ## Redefine bounding box using map selection
-  if (go_boundBox){
     SelectMapArea(environment = environment(), boundingBox = boundingBox)
     DisplayOSM(boundingBox, graticuleInterval = 0.1)
   }
@@ -100,7 +95,7 @@ InvestigateTrack <- function(go_boundBox = TRUE,
   AssesTrackOnMap(track_lst = if (exists('track_lst')) {track_lst} else {NULL},
                   boundingBox = boundingBox,
                   rasterObject = ele_raster
-                  )
+  )
   
   
 }

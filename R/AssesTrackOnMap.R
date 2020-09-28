@@ -5,6 +5,7 @@ AssesTrackOnMap <- function(track_lst,
                             rasterObject
 ){
   
+  # debugSource(here::here('R', 'ProcessSelectedPoints.R'))
   source(here::here('R', 'ProcessSelectedPoints.R'))
   
   if (is.data.frame(track_lst)){
@@ -28,16 +29,16 @@ AssesTrackOnMap <- function(track_lst,
       stopApp()
     })
     
-    ## Observe clicks on markers
+    ## Observe clicks on markers of tracks
     observeEvent(input$ending, {
       stopApp()
     })
     
     observeEvent(input$myMap_marker_click, {
       clickedPoint <- input$myMap_marker_click
-      pointCoords <- c(lon = clickedPoint$lng, lat = clickedPoint$lat, id = clickedPoint$id)
+      points_coords <- c(lon = clickedPoint$lng, lat = clickedPoint$lat, id = clickedPoint$id)
 
-      ProcessSelectedPoints(track_lst = track_lst, pointCoords = pointCoords, rasterObject = rasterObject)
+      ProcessSelectedPoints(track_lst = track_lst, points_coords = points_coords, rasterObject = rasterObject)
 
       leafletProxy('myMap') %>%
         addCircles(lng = clickedPoint$lng, lat = clickedPoint$lat, group = 'circles',
@@ -49,9 +50,9 @@ AssesTrackOnMap <- function(track_lst,
     ## Observe clicks on any point of the map
     observeEvent(input$myMap_click, {
       clickedPoint <- input$myMap_click
-      pointCoords <- c(lon = clickedPoint$lng, lat = clickedPoint$lat, id = 'map')
+      points_coords <- c(lon = clickedPoint$lng, lat = clickedPoint$lat, id = 'map')
 
-      pointTable <- ProcessSelectedPoints(track_lst = track_lst, pointCoords = pointCoords, rasterObject = rasterObject)
+      pointTable <- ProcessSelectedPoints(track_lst = track_lst, points_coords = points_coords, rasterObject = rasterObject)
       
       if (go.showCumulative){
         pointText <- sprintf('%.1f km %.0f m', pointTable$cumDist/1e3, pointTable$cumGain_pos) 
