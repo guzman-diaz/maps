@@ -27,8 +27,8 @@ ProcessSelectedPoints <- function(track_lst,
   ## Whole track table
   if (!exists('track_proposed', envir = .GlobalEnv)){
     track_proposed <- data.frame(lon = as.numeric(),
-                                lat = as.numeric(),
-                                stringsAsFactors = F
+                                 lat = as.numeric(),
+                                 stringsAsFactors = F
     ) 
     
     assign('track_proposed', track_proposed, envir = .GlobalEnv)
@@ -100,61 +100,60 @@ ProcessSelectedPoints <- function(track_lst,
     track_proposed <- rbind(track_proposed, as.data.frame(row_new[c('lon', 'lat')]))
     
   } else {
-
+    
     ## -------------------------------------------------------------------------
     ## Two points in the same track
     ### Get interval of the chunk of records from original track
-    pointInterval <- as.numeric(substring(row_last$id, 5)):as.numeric(substring(row_new$id, 5))
+    points_interval_idx <- as.numeric(substring(row_last$id, 5)):as.numeric(substring(row_new$id, 5))
     
     ### Get the in-between original coords
-    # points_inBetween <- track_lst[[as.numeric(substr(row_last$id, 1, 3))]]$table[pointInterval, ]
-    points_inBetween <- track_lst[[as.numeric(substr(row_last$id, 1, 3))]]@coords[pointInterval, ] %>% 
+    points_inbetween <- track_lst[[as.numeric(substr(row_last$id, 1, 3))]]@coords[points_interval_idx, ] %>% 
       matrix(ncol = 3) %>% 
       as.data.frame() %>% 
       setNames(c('lon', 'lat', 'z'))
     
     ### If only one record, duplicate to have two points
-    if (nrow(points_inBetween) < 2){
-      points_inBetween <- rbind(points_inBetween, points_inBetween)
+    if (nrow(points_inbetween) < 2){
+      points_inbetween <- rbind(points_inbetween, points_inbetween)
     }
     
     ### Compute all intermediate distances
-    for (row_id in 2:nrow(points_inBetween)){
-      points_inBetween[row_id, 'dist'] <- geosphere::distHaversine(points_inBetween[row_id-1, c('lon', 'lat')],
-                                                                 points_inBetween[row_id, c('lon', 'lat')]
+    for (row_id in 2:nrow(points_inbetween)){
+      points_inbetween[row_id, 'dist'] <- geosphere::distHaversine(points_inbetween[row_id-1, c('lon', 'lat')],
+                                                                   points_inbetween[row_id, c('lon', 'lat')]
       )
       
     }
     
     ### Retain just the sum to incorporate to the summary table
-    row_new['dist'] <- sum(points_inBetween[-1, 'dist'])
+    row_new['dist'] <- sum(points_inbetween[-1, 'dist'])
     
     ### Update the proposed track
     # if (as.numeric(newRow['dist']) != 0 | nrow(track_proposed) == 0){
-    track_proposed <- rbind(track_proposed, as.data.frame(points_inBetween[c('lon', 'lat')]))
+    track_proposed <- rbind(track_proposed, as.data.frame(points_inbetween[c('lon', 'lat')]))
     # }
-
+    
     ### Extract elevation
-    for (row_id in 1:nrow(points_inBetween)){
-
+    for (row_id in 1:nrow(points_inbetween)){
+      
       #### Transform to SpatialPoints class
-      points_inBetween_utm <- points_inBetween[row_id, c('lon', 'lat')]
-      sp::coordinates(points_inBetween_utm) <- names(points_inBetween_utm)
-
+      points_inbetween_utm <- points_inbetween[row_id, c('lon', 'lat')]
+      sp::coordinates(points_inbetween_utm) <- names(points_inbetween_utm)
+      
       #### Assign lon-lat CRS: epsg:4326
-      sp::proj4string(points_inBetween_utm) <- sp::CRS('+init=epsg:4326') # lon-lat
-
+      sp::proj4string(points_inbetween_utm) <- sp::CRS('+init=epsg:4326') # lon-lat
+      
       #### Transform to UTM30, i.e. epsg:32630
-      points_inBetween_utm <- sp::spTransform(points_inBetween_utm, sp::CRS('+init=epsg:32630'))
-
-      points_inBetween[row_id, 'elevation'] <- raster::extract(
+      points_inbetween_utm <- sp::spTransform(points_inbetween_utm, sp::CRS('+init=epsg:32630'))
+      
+      points_inbetween[row_id, 'elevation'] <- raster::extract(
         rasterObject,
-        as.data.frame(points_inBetween_utm)
+        as.data.frame(points_inbetween_utm)
       )
     }
     
     ### Calculate the elevation gain at each point
-    elevation_diff <- diff(points_inBetween$elevation)
+    elevation_diff <- diff(points_inbetween$elevation)
     
     ### The result is the sum of positive and negative
     row_new['gain_pos'] <- sum(elevation_diff[elevation_diff >= 0])
