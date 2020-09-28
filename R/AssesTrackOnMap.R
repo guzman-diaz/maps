@@ -22,7 +22,10 @@ AssesTrackOnMap <- function(track_lst,
   
   server <- function(input, output, session) {
     
-    output$myMap <- renderLeaflet({DisplayOSM(boundingBox, graticuleInterval = 0.1)})
+    output$myMap <- renderLeaflet({DisplayOSM(boundingBox, 
+                                              track_lst = track_lst,
+                                              graticuleInterval = 0.1
+    )})
     
     ## Observe "Done" button events
     observeEvent(input$doneButton, {
