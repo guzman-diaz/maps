@@ -25,13 +25,13 @@ ProcessSelectedPoints <- function(track_lst,
   }
   
   ## Whole track table
-  if (!exists('proposedTrack', envir = .GlobalEnv)){
-    proposedTrack <- data.frame(lon = as.numeric(),
+  if (!exists('track_proposed', envir = .GlobalEnv)){
+    track_proposed <- data.frame(lon = as.numeric(),
                                 lat = as.numeric(),
                                 stringsAsFactors = F
     ) 
     
-    assign('proposedTrack', proposedTrack, envir = .GlobalEnv)
+    assign('track_proposed', track_proposed, envir = .GlobalEnv)
     print('New track initialized.')
   }
   
@@ -66,6 +66,8 @@ ProcessSelectedPoints <- function(track_lst,
   if (substr(points_coords['id'], 1, 3) != substr(row_last['id'], 1, 3) |
       substr(points_coords['id'], 1, 3) == 'map'
   ){
+    
+    ## -------------------------------------------------------------------------
     ## Two points not in the same track
     ### Distance
     row_new['dist'] <- geosphere::distHaversine(row_last[1:2],
@@ -98,12 +100,18 @@ ProcessSelectedPoints <- function(track_lst,
     track_proposed <- rbind(track_proposed, as.data.frame(row_new[c('lon', 'lat')]))
     
   } else {
+
+    ## -------------------------------------------------------------------------
     ## Two points in the same track
     ### Get interval of the chunk of records from original track
     pointInterval <- as.numeric(substring(row_last$id, 5)):as.numeric(substring(row_new$id, 5))
     
     ### Get the in-between original coords
-    points_inBetween <- track_lst[[as.numeric(substr(row_last$id, 1, 3))]]$table[pointInterval, ]
+    # points_inBetween <- track_lst[[as.numeric(substr(row_last$id, 1, 3))]]$table[pointInterval, ]
+    points_inBetween <- track_lst[[as.numeric(substr(row_last$id, 1, 3))]]@coords[pointInterval, ] %>% 
+      matrix(ncol = 3) %>% 
+      as.data.frame() %>% 
+      setNames(c('lon', 'lat', 'z'))
     
     ### If only one record, duplicate to have two points
     if (nrow(points_inBetween) < 2){
@@ -122,17 +130,26 @@ ProcessSelectedPoints <- function(track_lst,
     row_new['dist'] <- sum(points_inBetween[-1, 'dist'])
     
     ### Update the proposed track
-    # if (as.numeric(newRow['dist']) != 0 | nrow(proposedTrack) == 0){
+    # if (as.numeric(newRow['dist']) != 0 | nrow(track_proposed) == 0){
     track_proposed <- rbind(track_proposed, as.data.frame(points_inBetween[c('lon', 'lat')]))
     # }
-    
-    
-    ############### TODO: transform in-between coords to utm to extract elevation
+
     ### Extract elevation
     for (row_id in 1:nrow(points_inBetween)){
+
+      #### Transform to SpatialPoints class
+      points_inBetween_utm <- points_inBetween[row_id, c('lon', 'lat')]
+      sp::coordinates(points_inBetween_utm) <- names(points_inBetween_utm)
+
+      #### Assign lon-lat CRS: epsg:4326
+      sp::proj4string(points_inBetween_utm) <- sp::CRS('+init=epsg:4326') # lon-lat
+
+      #### Transform to UTM30, i.e. epsg:32630
+      points_inBetween_utm <- sp::spTransform(points_inBetween_utm, sp::CRS('+init=epsg:32630'))
+
       points_inBetween[row_id, 'elevation'] <- raster::extract(
         rasterObject,
-        as.data.frame(TransformCoordinates(points_inBetween[row_id, c('lon', 'lat')], is.lonLat = T))
+        as.data.frame(points_inBetween_utm)
       )
     }
     
@@ -161,7 +178,7 @@ ProcessSelectedPoints <- function(track_lst,
   
   # Export
   assign('points_tbl', points_tbl, envir =  .GlobalEnv)
-  assign('proposedTrack', track_proposed, envir =  .GlobalEnv)
+  assign('track_proposed', track_proposed, envir =  .GlobalEnv)
   
   # Output
   return(points_tbl)

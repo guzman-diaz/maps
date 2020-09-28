@@ -10,7 +10,7 @@ InvestigateTrack <- function(track_folder = here::here('data', 'tracks', 'redes'
   # Source files
   source(here::here('R', 'SelectMapArea.R'))
   source(here::here('R', 'DisplayOSM.R'))
-  source(here::here('R', 'AssesTrackOnMap.R'))
+  # source(here::here('R', 'AssesTrackOnMap.R'))
   
   pacman::p_load(shiny)
   

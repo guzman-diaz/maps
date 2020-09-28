@@ -5,8 +5,7 @@ AssesTrackOnMap <- function(track_lst,
                             rasterObject
 ){
   
-  # debugSource(here::here('R', 'ProcessSelectedPoints.R'))
-  source(here::here('R', 'ProcessSelectedPoints.R'))
+  # source(here::here('R', 'ProcessSelectedPoints.R'))
   
   if (is.data.frame(track_lst)){
     track_lst <- list(list(table = track_lst))
@@ -40,9 +39,9 @@ AssesTrackOnMap <- function(track_lst,
     observeEvent(input$myMap_marker_click, {
       clickedPoint <- input$myMap_marker_click
       points_coords <- c(lon = clickedPoint$lng, lat = clickedPoint$lat, id = clickedPoint$id)
-
+      
       ProcessSelectedPoints(track_lst = track_lst, points_coords = points_coords, rasterObject = rasterObject)
-
+      
       leafletProxy('myMap') %>%
         addCircles(lng = clickedPoint$lng, lat = clickedPoint$lat, group = 'circles',
                    weight = 1, radius = 5, color = 'black', fillColor = 'green',
