@@ -8,12 +8,7 @@ InvestigateTrack <- function(track_folder = here::here('data', 'tracks', 'redes'
   
 
   # ============================================================================
-  # Source files
-  
-  source(here::here('R', 'SelectMapArea.R'))
-  source(here::here('R', 'DisplayOSM.R'))
-  # source(here::here('R', 'AssesTrackOnMap.R'))
-  
+
   pacman::p_load(shiny)
   
   # ============================================================================
@@ -99,7 +94,9 @@ InvestigateTrack <- function(track_folder = here::here('data', 'tracks', 'redes'
   # Trace track on map
   
   if (go_startOver){
-    rm('points_tbl', 'track_proposed', envir = .GlobalEnv)
+    suppressWarnings(
+      rm('points_tbl', 'track_proposed', envir = .GlobalEnv)
+    )
   }
   
   AssesTrackOnMap(track_lst = if (exists('track_lst')) {track_lst} else {NULL},

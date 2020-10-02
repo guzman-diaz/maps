@@ -5,8 +5,6 @@ AssesTrackOnMap <- function(track_lst,
                             rasterObject
 ){
   
-  # source(here::here('R', 'ProcessSelectedPoints.R'))
-  
   if (is.data.frame(track_lst)){
     track_lst <- list(list(table = track_lst))
   }
