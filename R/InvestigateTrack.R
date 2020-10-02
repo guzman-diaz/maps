@@ -8,6 +8,7 @@ InvestigateTrack <- function(track_folder = here::here('data', 'tracks', 'redes'
 
   # ============================================================================
   # Source files
+  
   source(here::here('R', 'SelectMapArea.R'))
   source(here::here('R', 'DisplayOSM.R'))
   # source(here::here('R', 'AssesTrackOnMap.R'))
@@ -91,6 +92,10 @@ InvestigateTrack <- function(track_folder = here::here('data', 'tracks', 'redes'
   # Load raster
 
   ele_raster <- readRDS(file.path(ele_folder, ele_file))
+  
+
+  # ============================================================================
+  # Trace track on map
   
   AssesTrackOnMap(track_lst = if (exists('track_lst')) {track_lst} else {NULL},
                   boundingBox = boundingBox,

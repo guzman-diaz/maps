@@ -53,7 +53,7 @@ AssesTrackOnMap <- function(track_lst,
     observeEvent(input$myMap_click, {
       clickedPoint <- input$myMap_click
       points_coords <- c(lon = clickedPoint$lng, lat = clickedPoint$lat, id = 'map')
-
+      
       pointTable <- ProcessSelectedPoints(track_lst = track_lst, points_coords = points_coords, rasterObject = rasterObject)
       
       if (go.showCumulative){
@@ -61,7 +61,7 @@ AssesTrackOnMap <- function(track_lst,
       } else {
         pointText <- as.character(nrow(pointTable))
       }
-
+      
       leafletProxy('myMap') %>%
         addCircles(lng = clickedPoint$lng, lat = clickedPoint$lat, group = 'circles',
                    weight = 1, radius = 5, color = 'black', fillColor = 'green',
@@ -74,7 +74,7 @@ AssesTrackOnMap <- function(track_lst,
       
       
     })
-
+    
   }
   
   shinyApp(ui, server)
