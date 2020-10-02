@@ -1,7 +1,8 @@
 InvestigateTrack <- function(track_folder = here::here('data', 'tracks', 'redes'),
                              track_file = '*',
                              ele_folder = '\\\\pocpaco\\maps\\rasters\\',
-                             ele_file = 'Asturias.rds'
+                             ele_file = 'Asturias.rds',
+                             go_startOver = TRUE
                              
 ){
   
@@ -96,6 +97,10 @@ InvestigateTrack <- function(track_folder = here::here('data', 'tracks', 'redes'
 
   # ============================================================================
   # Trace track on map
+  
+  if (go_startOver){
+    rm('points_tbl', 'track_proposed', envir = .GlobalEnv)
+  }
   
   AssesTrackOnMap(track_lst = if (exists('track_lst')) {track_lst} else {NULL},
                   boundingBox = boundingBox,
