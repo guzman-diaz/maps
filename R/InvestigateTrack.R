@@ -1,4 +1,4 @@
-InvestigateTrack <- function(track_folder = here::here('data', 'tracks', 'redes'),
+InvestigateTrack <- function(track_folder = here::here('data', 'tracks', 'plan'),
                              track_file = '*',
                              ele_folder = '\\\\pocpaco\\maps\\rasters\\',
                              ele_file = 'Asturias.rds',
