@@ -9,6 +9,8 @@ InvestigateTrack <- function(track_folder = 'C:\\Users\\boss\\Google Drive\\Maps
 
   # ============================================================================
 
+  library(magrittr)
+  library(dplyr)
   pacman::p_load(shiny)
 
   # ============================================================================
