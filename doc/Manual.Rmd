@@ -53,11 +53,44 @@ trackR::SaveTrack('Congostinas - Pedro García')
 ```
 
 
-# Get rasters
+# 3D maps
 
-To get and later save a rater area, initally defined by a set of tracks stored in `track_folder`:
+## Prepare map objects
+
+By default, the map of Asturias is used, with a high-, 25-resolution raster employed (`AsturiasHD.rds`). If a more detailed raster is used, for instance using the 5-resolution rasters, it can be downloaded using the following instruction.
 
 ```{r}
-trackR::GetIGNRaster()
+trackR::GetIGNRaster(go_boundBox = TRUE,
+                     track_folder = 'C:\\Users\\boss\\Google Drive\\Maps\\plan',
+                     track_file = '*', # NULL if no track is employed
+                     tile_resolution = 25,
+                     ele_folder = '\\\\pocpaco\\maps\\elevation\\'
+)
+```
+
+```{r}
+mapObjects <- trackR::GetMapObjects(go_boundBox = TRUE,
+                                    osmType_id = NULL,
+                                    go_mask_elevation = FALSE,
+                                    go_mask_tif = FALSE,
+                                    ele_folder = '\\\\pocpaco\\maps\\rasters\\',
+                                    ele_file = 'Asturias.rds', # other rasters should be obtained using 'GetIGNRaster'
+                                    track_folder = 'C:\\Users\\boss\\Google Drive\\Maps\\plan',
+                                    track_file = '*', # NULL if no track is employed
+                                    tif_folder = '\\\\pocpaco\\maps\\overlays\\',
+                                    tif_name = 'Asturias_1980_georef.tif',
+                                    shape_folder = '\\\\pocpaco\\maps\\shapes\\',
+                                    shape_name = 'shape_Asturias.rds'
+)
+```
+
+## Render
+
+```{r}
+trackR::RenderMap(mapObjects_lst = mapObjects,
+                  zscale = 100,
+                  ambientLayer_lightness = 0.5,
+                  shadeLayer_lightness = 0.7
+)
 ```
 

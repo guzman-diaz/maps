@@ -1,4 +1,4 @@
-RenderMap <- function(mapTensorList,
+RenderMap <- function(mapObjects_lst,
                       zscale = 100,
                       ambientLayer_lightness = 0.5,
                       shadeLayer_lightness = 0.7
