@@ -43,21 +43,12 @@ source(here::here('R', 'DisplayOSM.R'))
 source(here::here('R', 'AssesTrackOnMap.R'))
 
 ## Pick points
-InvestigateTrack()
+trackR::InvestigateTrack(track_folder = 'C:/Users/boss/Google Drive/Maps/plan/', ele_file = 'AsturiasHD.rds')
 ```
 
 
 ```{r}
 ## Save
-track_name <- 'Obiu.kml'
-
-track_proposed %>% 
-  dplyr::select(lon, lat) %>% 
-  dplyr::mutate(id = track_name, p_id = 1:nrow(.), time = Sys.Date()) %>% 
-  dplyr::mutate(track_name = track_name, 
-                file_name = here::here('output', track_name), 
-                track_color = '00ff33ff'
-  ) %>% 
-export_kml(t_id = 'id')
+trackR::SaveTrack('Congostinas - Pedro García')
 ```
 
