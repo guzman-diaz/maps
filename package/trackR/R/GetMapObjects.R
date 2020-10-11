@@ -4,7 +4,7 @@ GetMapObjects <- function(go_boundBox = TRUE,
                           go_mask_tif = FALSE,
                           ele_folder = '\\\\pocpaco\\maps\\rasters\\',
                           ele_file = 'Asturias.rds',
-                          track_folder = here::here('data', 'tracks', 'hibeo'),
+                          track_folder = 'C:\\Users\\boss\\Google Drive\\Maps\\plan',
                           track_file = '*', # NULL if no track is employed
                           tif_folder = '\\\\pocpaco\\maps\\overlays\\',
                           tif_name = 'Asturias_1980_georef.tif',
@@ -26,11 +26,6 @@ GetMapObjects <- function(go_boundBox = TRUE,
   pacman::p_load(leaflet)
   pacman::p_load(geosphere)
   pacman::p_load(scales)
-  
-  ## Source files
-  source(here::here('R', 'SelectMapArea.R'))
-  source(here::here('R', 'ShowOSM.R'))
-  source(here::here('R', 'TransformCoordinates.R'))
   
   ## Define OSM urls: http://leaflet-extras.github.io/leaflet-providers/preview/
   osmType_lst <- list()
@@ -80,47 +75,57 @@ GetMapObjects <- function(go_boundBox = TRUE,
     track_lst <- lapply(track_lst,
                         function(x){
                           x <- as.data.frame(x)
-                          names(x) <- c('lon', 'lat', 'elevation')
+                          names(x) <- c('x', 'y', 'z')
+                          ### Convert to SP object
+                          sp::coordinates(x) <- names(x)
+                          ### Assign lonlat CRS
+                          sp::proj4string(x) <- sp::CRS('+init=epsg:4326') # lon-lat
                           return(x)
                         }
     )
-
+    
+    
     ## Calculate bbox and show
     ### Bind all tables
-    lonlat_corners <- dplyr::bind_rows(track_lst) %>% 
-      summarize(max.lon = max(lon), max.lat = max(lat), min.lon = min(lon), min.lat = min(lat))
-    
-    ### Define bbox
-    p1 = c(lon = lonlat_corners$min.lon, lat = lonlat_corners$min.lat) 
-    p2 = c(lon = lonlat_corners$max.lon, lat = lonlat_corners$max.lat) 
-    
-    boundingBox <- list(p1 = as.list(p1), p2 = as.list(p2))
-    
-    boundingBox$p1 <-  c(boundingBox$p1, TransformCoordinates(as.vector(boundingBox$p1), is.lonLat = T))
-    boundingBox$p2 <-  c(boundingBox$p2, TransformCoordinates(as.vector(boundingBox$p2), is.lonLat = T))
+    track_tbl <- lapply(track_lst, function(x) as.data.frame(x@coords)) %>% 
+      dplyr::bind_rows()
+    sp::coordinates(track_tbl) <- names(track_tbl)
+    sp::proj4string(track_tbl) <- sp::CRS('+init=epsg:4326') # lon-lat projection
     
     ### Show result
-    ShowOSM(boundingBox, graticuleInterval = 0.1, trackList = track_lst)
+    DisplayOSM(mapObject_sp = track_tbl, graticuleInterval = 0.1, track_lst = track_lst)
   } else {
     track_lst <- NA
   }
   
-
+  # Define bounding box from tracks
+  boundingBox <- track_tbl %>% 
+    ### Calculate extent
+    raster::extent()
+  
   
   # ============================================================================
-  # Re-define bounding box
+  # Process bounding box
   
   if (!exists('boundingBox')){
     boundingBox <- NULL
   }
   
+  ## Redefine bounding box using map selection
   if (go_boundBox){
     SelectMapArea(environment = environment(), boundingBox = boundingBox)
     
-    ShowOSM(boundingBox, graticuleInterval = 0.1)
+    DisplayOSM(boundingBox, graticuleInterval = 0.1)
   }
   
+  ## Transform to UTM30, i.e. epsg:32630
+  boundingBox <- as(boundingBox, 'SpatialPolygons')
+  sp::proj4string(boundingBox) <- sp::CRS('+init=epsg:4326') # lon-lat projection
+  boundingBox <-boundingBox %>% 
+    sp::spTransform(sp::CRS('+init=epsg:32630')) %>% 
+    raster::extent()
   
+
   # ============================================================================
   # Elevation
   
@@ -128,7 +133,7 @@ GetMapObjects <- function(go_boundBox = TRUE,
   ele_raster <- readRDS(file.path(ele_folder, ele_file))
   
   if (!is.null(boundingBox)){
-    ele_raster <- raster::crop(ele_raster, with(boundingBox, c(p1$x, p2$x, p1$y, p2$y)))
+    ele_raster <- raster::crop(ele_raster, boundingBox)
   }
   
   cat(sprintf('Elevation name: %s \n', ele_file))
@@ -143,13 +148,17 @@ GetMapObjects <- function(go_boundBox = TRUE,
     ele_raster <- ele_raster %>% 
       raster::crop(extent(mapShape)) %>% 
       raster::mask(mapShape) %>% 
-      raster::crop(with(boundingBox, c(p1$x, p2$x, p1$y, p2$y)))
+      raster::crop(ele_raster, boundingBox)
   }
   
   ## If there is a track, recalculate elevation from raster
   track_lst <- lapply(track_lst, 
                       function(x){
-                        x$elevation <- raster::extract(ele_raster, TransformCoordinates(x[c('lon', 'lat')], is.lonLat = T))
+                        #### Transform to UTM30, i.e. epsg:32630
+                        points_coords_utm <- sp::spTransform(x, sp::CRS('+init=epsg:32630'))
+
+                        #### Get elevation
+                        x$elevation <- raster::extract(ele_raster, points_coords_utm)
                         return(x)
                       }
   )
@@ -164,9 +173,7 @@ GetMapObjects <- function(go_boundBox = TRUE,
     tif_raster <- raster::stack(file.path(tif_folder, tif_name))
     
     if (!is.null(boundingBox)){
-      tif_raster <- raster::crop(tif_raster, 
-                                 with(boundingBox, c(p1$x, p2$x, p1$y, p2$y))
-      )
+      tif_raster <- raster::crop(tif_raster, boundingBox)
     }
     
     cat(sprintf('TIF name: %s\n', tif_name))
@@ -187,7 +194,7 @@ GetMapObjects <- function(go_boundBox = TRUE,
     ## Crop to bounding box
     if (is.null(boundingBox)){
       tif_raster <- tif_raster %>% 
-        raster::crop(c(boundingBox$p1$x, boundingBox$p2$x, boundingBox$p1$y, boundingBox$p2$y))
+        raster::crop(boundingBox)
     }
     
   } else {
