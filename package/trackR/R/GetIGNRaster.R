@@ -6,13 +6,6 @@ GetIGNRaster <- function(go_boundBox = TRUE,
                          ){
   
   # ============================================================================
-  # Source files
-  source(here::here('R', 'SelectMapArea.R'))
-  source(here::here('R', 'DisplayOSM.R'))
-  source(here::here('R', 'TransformCoordinates.R'))
-
-  
-  # ============================================================================
   # Tracks
   
   if (!is.null(track_file)){
