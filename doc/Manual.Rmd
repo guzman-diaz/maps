@@ -52,3 +52,12 @@ trackR::InvestigateTrack(track_folder = 'C:/Users/boss/Google Drive/Maps/plan/',
 trackR::SaveTrack('Congostinas - Pedro García')
 ```
 
+
+# Get rasters
+
+To get and later save a rater area, initally defined by a set of tracks stored in `track_folder`:
+
+```{r}
+trackR::GetIGNRaster()
+```
+

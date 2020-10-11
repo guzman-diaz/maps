@@ -1,5 +1,5 @@
 GetIGNRaster <- function(go_boundBox = TRUE,
-                         track_folder = here::here('data', 'tracks', 'redes'),
+                         track_folder = 'C:\\Users\\boss\\Google Drive\\Maps\\plan',
                          track_file = '*', # NULL if no track is employed
                          tile_resolution = 25,
                          ele_folder = '\\\\pocpaco\\maps\\elevation\\'
