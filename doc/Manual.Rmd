@@ -55,6 +55,27 @@ trackR::SaveTrack('Congostinas - Pedro García')
 
 # 3D maps
 
+## Obtain georeferenced tif
+
+https://www.qgistutorials.com/en/docs/3/georeferencing_basics.html
+
+Using QGIS 2.18:
+
+- Open the map used as reference to get the coordinates to georeference a .jpg image: `Layer > Add Layer > Add Raster Layer` (Ctr+Shift+R). Select the file `Asturias_raster.ecw`.
+
+- Select projection `+proj=utm +zone=30 +datum=WGS84 +units=m +no_defs` in `Project > Project Properties > Enable 'On The Fly' SRC = WGS 84 / UTM zone 30N EPSG:32360`.
+
+- Activate plugin: `Plugins > Manage and Install plugins... > Install > Georeferencer GDAL`.
+
+- Open Georeferencer: `Raster > Georeferencer > Georeferencer`.
+
+- Open .jpg: `File > Open Raster...` (Ctrl+O).
+
+- Add at least six points: `Edit > Add Point`. Use the option `From canvas map` to select the same geographic point in the reference raster map (`Asturias_raster.ecw`).
+
+- Define the transformation settings: `Settings > Transformation Settings`. `Transformation = Polynomial 1`, `Rsampling method = Nearest neighbour`, `Target CRS = EPSG:32360 - ETRS89/ETRS-TM30`, `Compression = LZW`. 
+
+
 ## Prepare map objects
 
 By default, the map of Asturias is used, with a high-, 25-resolution raster employed (`AsturiasHD.rds`). If a more detailed raster is used, for instance using the 5-resolution rasters, it can be downloaded using the following instruction.
